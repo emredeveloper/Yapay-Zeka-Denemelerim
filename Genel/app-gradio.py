@@ -6,7 +6,7 @@ import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-API_KEY = "AIzaSyARLSyuSqD79Lvct7gc203X7RvXxa3CuHo"
+API_KEY = ""
 youtube = build('youtube', 'v3', developerKey=API_KEY)
 
 def extract_video_id(url):
