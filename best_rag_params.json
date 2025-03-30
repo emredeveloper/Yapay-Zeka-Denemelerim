@@ -1,0 +1,9 @@
+{
+  "top_k": 1,
+  "similarity_threshold": 0.7192428112030029,
+  "context_window": 1900,
+  "reranking_weight": 0.11001229286193848,
+  "exact_match_boost": 1.7375162541866302,
+  "semantic_weight": 0.6271715641021729,
+  "diversity_factor": 0.41117122769355774
+}
