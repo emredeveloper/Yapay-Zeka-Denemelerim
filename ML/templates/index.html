@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block title %}- Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow" data-aos="fade-up">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">
+                    <i class="fas fa-home text-primary"></i> California Housing Dataset Analysis
+                </h1>
+                <p class="card-text lead text-center">
+                    Interactive dashboard for analyzing and visualizing California housing market data
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Dataset Info Card -->
+    <div class="col-md-6" data-aos="fade-right">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Dataset Information</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Number of samples
+                        <span class="badge bg-primary rounded-pill">{{ dataset_info.samples }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Number of features
+                        <span class="badge bg-primary rounded-pill">{{ dataset_info.features }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Target variable
+                        <span class="badge bg-success rounded-pill">{{ dataset_info.target }}</span>
+                    </li>
+                </ul>
+                <div class="table-responsive mt-3">
+                    <h6 class="mb-2">Sample Data:</h6>
+                    {{ dataset_info.head|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Geographic Map Card -->
+    <div class="col-md-6" data-aos="fade-left">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-map"></i> Geographical Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="geo-plot" class="plot-container"></div>
+                <p class="card-text text-center mt-2">
+                    <small class="text-muted">Housing price distribution across California</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Navigation Cards -->
+    <div class="col-md-12">
+        <div class="card-group">
+            <!-- Data Exploration Card -->
+            <div class="card shadow m-2" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card-body text-center">
+                    <i class="fas fa-search fa-4x text-primary mb-3"></i>
+                    <h5 class="card-title">Data Exploration</h5>
+                    <p class="card-text">Explore statistics, distributions, and correlations in the dataset.</p>
+                    <a href="/data-exploration" class="btn btn-primary">Explore Data</a>
+                </div>
+            </div>
+            
+            <!-- Feature Engineering Card -->
+            <div class="card shadow m-2" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card-body text-center">
+                    <i class="fas fa-tools fa-4x text-primary mb-3"></i>
+                    <h5 class="card-title">Feature Engineering</h5>
+                    <p class="card-text">Discover engineered features to enhance model performance.</p>
+                    <a href="/feature-engineering" class="btn btn-primary">View Features</a>
+                </div>
+            </div>
+            
+            <!-- Model Training Card -->
+            <div class="card shadow m-2" data-aos="zoom-in" data-aos-delay="300">
+                <div class="card-body text-center">
+                    <i class="fas fa-cogs fa-4x text-primary mb-3"></i>
+                    <h5 class="card-title">Model Training</h5>
+                    <p class="card-text">Examine model training process and evaluation metrics.</p>
+                    <a href="/model-training" class="btn btn-primary">View Model</a>
+                </div>
+            </div>
+            
+            <!-- Feature Importance Card -->
+            <div class="card shadow m-2" data-aos="zoom-in" data-aos-delay="400">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-4x text-primary mb-3"></i>
+                    <h5 class="card-title">Feature Importance</h5>
+                    <p class="card-text">See which features have the most impact on predictions.</p>
+                    <a href="/feature-importance" class="btn btn-primary">View Importance</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Target Distribution -->
+    <div class="col-md-6" data-aos="fade-up">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-area"></i> Target Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="target-plot" class="plot-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Correlation Plot -->
+    <div class="col-md-6" data-aos="fade-up" data-aos-delay="100">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Feature Correlation</h5>
+            </div>
+            <div class="card-body">
+                <div id="correlation-plot" class="plot-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load plots when document is ready
+    document.addEventListener("DOMContentLoaded", function() {
+        // Load geographic plot
+        fetch('/api/geo-plot')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('geo-plot', plotData.data, plotData.layout);
+            })
+            .catch(error => console.error('Error loading geographic plot:', error));
+        
+        // Load target distribution plot
+        fetch('/api/target-distribution')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('target-plot', plotData.data, plotData.layout);
+            })
+            .catch(error => console.error('Error loading target distribution plot:', error));
+        
+        // Load correlation plot
+        fetch('/api/correlation-plot')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('correlation-plot', plotData.data, plotData.layout);
+            })
+            .catch(error => console.error('Error loading correlation plot:', error));
+    });
+
+    // Make plots responsive
+    window.addEventListener('resize', function() {
+        Plotly.relayout('geo-plot', {
+            autosize: true
+        });
+        Plotly.relayout('target-plot', {
+            autosize: true
+        });
+        Plotly.relayout('correlation-plot', {
+            autosize: true
+        });
+    });
+</script>
+{% endblock %}

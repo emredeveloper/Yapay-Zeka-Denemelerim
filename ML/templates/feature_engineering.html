@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+
+{% block title %}- Feature Engineering{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-tools text-primary"></i> Feature Engineering
+                </h2>
+                <p class="card-text lead">Creating new features to enhance model performance</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Engineered Features</h5>
+            </div>
+            <div class="card-body">
+                <p>The following features have been created to improve model prediction power:</p>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Formula</th>
+                                <th>Mean</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>rooms_per_household</strong></td>
+                                <td><code>total_rooms / households</code></td>
+                                <td>{{ feature_eng_results.stats.rooms_per_household.mean|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.rooms_per_household.min|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.rooms_per_household.max|round(2) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>bedrooms_ratio</strong></td>
+                                <td><code>total_bedrooms / total_rooms</code></td>
+                                <td>{{ feature_eng_results.stats.bedrooms_ratio.mean|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.bedrooms_ratio.min|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.bedrooms_ratio.max|round(2) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>population_per_household</strong></td>
+                                <td><code>population / households</code></td>
+                                <td>{{ feature_eng_results.stats.population_per_household.mean|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.population_per_household.min|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.population_per_household.max|round(2) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>income_per_capita</strong></td>
+                                <td><code>median_income / (population / households)</code></td>
+                                <td>{{ feature_eng_results.stats.income_per_capita.mean|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.income_per_capita.min|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.income_per_capita.max|round(2) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>distance_to_ocean</strong></td>
+                                <td><code>sqrt(longitude² + latitude²)</code></td>
+                                <td>{{ feature_eng_results.stats.distance_to_ocean.mean|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.distance_to_ocean.min|round(2) }}</td>
+                                <td>{{ feature_eng_results.stats.distance_to_ocean.max|round(2) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> These engineered features help capture relationships that might not be apparent in the original features.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Feature Engineering Explanation</h5>
+            </div>
+            <div class="card-body">
+                <h5>Why Feature Engineering Matters</h5>
+                <p>Feature engineering is the process of using domain knowledge to create new variables that make machine learning algorithms work better. Here's why each feature was created:</p>
+                
+                <ul class="list-group mb-4">
+                    <li class="list-group-item">
+                        <strong>rooms_per_household:</strong> Measures housing density and space available per household, which is likely to correlate with housing prices.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>bedrooms_ratio:</strong> Indicates the proportion of rooms dedicated to bedrooms, which may reflect property type and layout.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>population_per_household:</strong> Captures household size, possibly indicating family demographics in the area.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>income_per_capita:</strong> Adjusts income for household size, giving a better measure of economic well-being.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>distance_to_ocean:</strong> A rough approximation of distance from the coast, since coastal properties in California often command higher prices.
+                    </li>
+                </ul>
+                
+                <div class="text-center">
+                    <a href="/model-training" class="btn btn-primary">
+                        <i class="fas fa-arrow-right"></i> Proceed to Model Training
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

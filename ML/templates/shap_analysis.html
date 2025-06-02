@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+
+{% block title %}- SHAP Analysis{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-line text-primary"></i> SHAP Value Analysis
+                </h2>
+                <p class="card-text lead">Understanding feature impact with SHapley Additive exPlanations</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- SHAP Plot Card -->
+    <div class="col-md-8">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Feature Correlation vs SHAP Values</h5>
+            </div>
+            <div class="card-body">
+                <div id="shap-plot" class="plot-container" style="height: 500px;"></div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> This plot shows how each feature's correlation with the target compares to its SHAP importance.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Importance Comparison Card -->
+    <div class="col-md-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-balance-scale"></i> Model vs SHAP Rankings</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Model Rank</th>
+                                <th>SHAP Rank</th>
+                                <th>Diff</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in shap_results.comparison_data %}
+                            <tr>
+                                <td>{{ item.feature }}</td>
+                                <td class="text-center">{{ item.model_rank }}</td>
+                                <td class="text-center">{{ item.shap_rank }}</td>
+                                <td class="text-center">
+                                    {% set diff = item.model_rank - item.shap_rank %}
+                                    {% if diff > 0 %}
+                                        <span class="badge bg-success">+{{ diff }}</span>
+                                    {% elif diff < 0 %}
+                                        <span class="badge bg-danger">{{ diff }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">0</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Understanding SHAP Values</h5>
+            </div>
+            <div class="card-body">
+                <p>SHAP (SHapley Additive exPlanations) values represent a feature's contribution to a specific prediction. They help explain the output of any machine learning model in a consistent and mathematically sound way.</p>
+                
+                <h5>Key Insights:</h5>
+                <ul>
+                    <li><strong>Consistent Features:</strong> Features that have similar rankings in both model importance and SHAP values are reliably important.</li>
+                    <li><strong>Discrepancies:</strong> Features with large differences between model and SHAP rankings may indicate complex interactions or non-linear relationships.</li>
+                    <li><strong>GPU Acceleration:</strong> This analysis uses NUMBA CUDA acceleration to calculate SHAP values efficiently.</li>
+                </ul>
+                
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Note:</strong> The SHAP values in this implementation are simplified approximations for demonstration purposes. For more accurate SHAP values, consider using the full SHAP library on CPU.
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-home"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Load SHAP plot
+        fetch('/api/shap-plot')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('shap-plot', plotData.data, plotData.layout);
+            })
+            .catch(error => console.error('Error loading SHAP plot:', error));
+    });
+
+    // Make plots responsive
+    window.addEventListener('resize', function() {
+        Plotly.relayout('shap-plot', {
+            autosize: true
+        });
+    });
+</script>
+{% endblock %}

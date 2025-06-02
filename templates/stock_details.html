@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ ticker }} - Hisse Detayları</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .price-up { color: #198754; }
+        .price-down { color: #dc3545; }
+        .chart-container {
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        .analysis-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">OllamaFinance</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Ana Sayfa</a>
+                <a class="nav-link" href="/portfolio">Portföyler</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row align-items-center mb-3">
+            <div class="col-md-6">
+                <h2>{{ ticker }} <small class="text-muted">{{ info.get('longName', ticker) }}</small></h2>
+                <h3 class="{% if performance.return >= 0 %}price-up{% else %}price-down{% endif %}">
+                    ${{ "%.2f"|format(price) }}
+                    <small class="{% if performance.return >= 0 %}price-up{% else %}price-down{% endif %}">
+                        {{ "%.2f"|format(performance.return) }}%
+                    </small>
+                </h3>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="btn-group mb-2">
+                    <a href="?period=1mo" class="btn btn-sm btn-outline-primary {{ 'active' if period == '1mo' else '' }}">1A</a>
+                    <a href="?period=3mo" class="btn btn-sm btn-outline-primary {{ 'active' if period == '3mo' else '' }}">3A</a>
+                    <a href="?period=6mo" class="btn btn-sm btn-outline-primary {{ 'active' if period == '6mo' else '' }}">6A</a>
+                    <a href="?period=1y" class="btn btn-sm btn-outline-primary {{ 'active' if period == '1y' else '' }}">1Y</a>
+                    <a href="?period=5y" class="btn btn-sm btn-outline-primary {{ 'active' if period == '5y' else '' }}">5Y</a>
+                </div>
+                
+                {% if portfolios %}
+                <div class="d-grid">
+                    <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        İşlem Yap
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% for portfolio in portfolios %}
+                        <li>
+                            <a class="dropdown-item" href="/trade/{{ portfolio.id }}?ticker={{ ticker }}">
+                                Portföy #{{ loop.index }} (${{ "%.2f"|format(portfolio.cash) }})
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% else %}
+                <a href="/portfolio/new" class="btn btn-primary">Portföy Oluştur</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <div id="chart" class="chart-container">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">AI Analizi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="analysis-box">
+                            {{ analysis|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Performans</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Getiri ({{ period }}):</span>
+                            <span class="{% if performance.return >= 0 %}price-up{% else %}price-down{% endif %}">
+                                {{ "%.2f"|format(performance.return) }}%
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Volatilite:</span>
+                            <span>{{ "%.2f"|format(performance.volatility) }}%</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Maks. Düşüş:</span>
+                            <span class="price-down">{{ "%.2f"|format(performance.max_drawdown) }}%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Şirket Bilgisi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Sektör:</span>
+                            <span>{{ info.get('sector', 'N/A') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Pazar Değeri:</span>
+                            <span>${{ "{:,.0f}".format(info.get('marketCap', 0)) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>F/K Oranı:</span>
+                            <span>{{ "%.2f"|format(info.get('trailingPE', 0)) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>52 Hafta:</span>
+                            <span>${{ "%.2f"|format(info.get('fiftyTwoWeekLow', 0)) }} - ${{ "%.2f"|format(info.get('fiftyTwoWeekHigh', 0)) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Temettü:</span>
+                            <span>{{ "%.2f"|format(info.get('dividendYield', 0) * 100) }}%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">İşlemler</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if portfolios %}
+                            {% for portfolio in portfolios %}
+                            <a href="/trade/{{ portfolio.id }}?ticker={{ ticker }}" class="btn btn-success mb-2 w-100">
+                                Portföy #{{ loop.index }} ile İşlem Yap
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <a href="/portfolio/new" class="btn btn-primary w-100">Portföy Oluştur</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Basit çizgi grafik
+            function renderSimpleChart(ticker, period) {
+                const chartEl = document.getElementById('chart');
+                
+                // Fiyat verileri
+                fetch(`/api/stock_chart/${ticker}?period=${period}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            chartEl.innerHTML = `<div class="alert alert-danger m-3">Graf yüklenemedi: ${data.message}</div>`;
+                            return;
+                        }
+                        
+                        // Veri hazırlığı - NaN değerlerini filtreleme
+                        const validData = [];
+                        const dates = data.dates || [];
+                        const prices = data.close || [];
+                        
+                        for (let i = 0; i < dates.length; i++) {
+                            if (prices[i] !== null && !isNaN(prices[i])) {
+                                validData.push({
+                                    date: dates[i],
+                                    price: prices[i]
+                                });
+                            }
+                        }
+                        
+                        if (validData.length < 2) {
+                            chartEl.innerHTML = '<div class="alert alert-warning m-3">Yetersiz veri: Grafik çizilemedi</div>';
+                            return;
+                        }
+                        
+                        // Canvas oluştur
+                        chartEl.innerHTML = '<canvas id="priceChart" width="800" height="400"></canvas>';
+                        const ctx = document.getElementById('priceChart').getContext('2d');
+                        
+                        // Birkaç renk
+                        const colors = {
+                            blue: 'rgba(54, 162, 235, 1)',
+                            green: 'rgba(75, 192, 192, 1)',
+                            red: 'rgba(255, 99, 132, 1)'
+                        };
+                        
+                        // Grafik oluştur (basit çizgi grafiği)
+                        const chartDates = validData.map(item => item.date);
+                        const chartPrices = validData.map(item => item.price);
+                        
+                        const maxPrice = Math.max(...chartPrices);
+                        const minPrice = Math.min(...chartPrices);
+                        const padding = (maxPrice - minPrice) * 0.1;
+                        
+                        // SVG çizelim - daha basit ve daha az bellek kullanır
+                        let svg = `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+                            <style>
+                                .chart-line { stroke: ${colors.blue}; stroke-width: 2; fill: none; }
+                                .chart-point { fill: ${colors.blue}; }
+                                .axis { stroke: #ccc; stroke-width: 1; }
+                                .label { font-family: Arial; font-size: 12px; fill: #666; }
+                            </style>`;
+                        
+                        // X ve Y eksenlerini ölçeklendirelim
+                        const xScale = (i) => 50 + (i * (700 / (chartDates.length - 1)));
+                        const yScale = (price) => 350 - ((price - minPrice + padding) / (maxPrice - minPrice + 2*padding) * 300);
+                        
+                        // Çizgi için noktaları birleştirelim
+                        let pathData = `M ${xScale(0)} ${yScale(chartPrices[0])}`;
+                        chartPrices.forEach((price, i) => {
+                            if (i > 0) pathData += ` L ${xScale(i)} ${yScale(price)}`;
+                        });
+                        
+                        // Eksenler
+                        svg += `<line x1="50" y1="50" x2="50" y2="350" class="axis" />`;
+                        svg += `<line x1="50" y1="350" x2="750" y2="350" class="axis" />`;
+                        
+                        // Fiyat çizgisi
+                        svg += `<path d="${pathData}" class="chart-line" />`;
+                        
+                        // Etiketler (başlangıç, orta ve son tarihler)
+                        svg += `<text x="50" y="370" class="label">${chartDates[0]}</text>`;
+                        svg += `<text x="400" y="370" class="label" text-anchor="middle">${chartDates[Math.floor(chartDates.length/2)]}</text>`;
+                        svg += `<text x="750" y="370" class="label" text-anchor="end">${chartDates[chartDates.length-1]}</text>`;
+                        
+                        // Fiyat etiketleri (min, orta, max)
+                        svg += `<text x="45" y="350" class="label" text-anchor="end">$${minPrice.toFixed(2)}</text>`;
+                        svg += `<text x="45" y="200" class="label" text-anchor="end">$${((maxPrice+minPrice)/2).toFixed(2)}</text>`;
+                        svg += `<text x="45" y="50" class="label" text-anchor="end">$${maxPrice.toFixed(2)}</text>`;
+                        
+                        // Son fiyat noktası ve etiketi
+                        const lastX = xScale(chartPrices.length - 1);
+                        const lastY = yScale(chartPrices[chartPrices.length - 1]);
+                        svg += `<circle cx="${lastX}" cy="${lastY}" r="4" class="chart-point" />`;
+                        svg += `<text x="${lastX + 10}" y="${lastY - 10}" class="label">$${chartPrices[chartPrices.length-1].toFixed(2)}</text>`;
+                        
+                        svg += `</svg>`;
+                        chartEl.innerHTML = svg;
+                    })
+                    .catch(error => {
+                        chartEl.innerHTML = `<div class="alert alert-danger m-3">Graf yüklenirken hata oluştu: ${error}</div>`;
+                    });
+            }
+            
+            renderSimpleChart('{{ ticker }}', '{{ period }}');
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+{% extends "layout.html" %}
+
+{% block title %}- Data Exploration{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow" data-aos="fade-down">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-search text-primary"></i> Data Exploration
+                </h2>
+                <p class="card-text lead">Exploring and understanding the California Housing dataset</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Summary Statistics Card -->
+    <div class="col-md-12" data-aos="fade-up">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-calculator"></i> Summary Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {{ summary_stats.summary_html|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Missing Values Card -->
+    <div class="col-md-6" data-aos="fade-right">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Missing Values</h5>
+            </div>
+            <div class="card-body">
+                {% if missing_values.has_missing %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle"></i> Dataset contains {{ missing_values.total_missing }} missing values!
+                    </div>
+                    <ul class="list-group">
+                        {% for column, count in missing_values.missing_counts.items() %}
+                            {% if count > 0 %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ column }}
+                                    <span class="badge bg-warning rounded-pill">{{ count }}</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> No missing values found in the dataset.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Correlation Matrix Card -->
+    <div class="col-md-6" data-aos="fade-left">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Correlation Matrix</h5>
+            </div>
+            <div class="card-body">
+                <div id="correlation-plot" class="plot-container"></div>
+                <div class="text-center mt-2">
+                    <button class="btn btn-outline-primary btn-sm" id="toggle-correlation">
+                        <i class="fas fa-expand-alt"></i> Toggle Fullscreen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Feature Distributions Card -->
+    <div class="col-md-12" data-aos="fade-up">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-area"></i> Feature Distributions</h5>
+            </div>
+            <div class="card-body">
+                <div id="feature-distributions" class="plot-container" style="height: 800px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Target Distribution Card -->
+    <div class="col-md-6" data-aos="fade-right">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-bullseye"></i> Target Variable Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="target-plot" class="plot-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scatter Matrix Card -->
+    <div class="col-md-6" data-aos="fade-left">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-th"></i> Scatter Matrix</h5>
+            </div>
+            <div class="card-body">
+                <div id="scatter-matrix" class="plot-container"></div>
+                <p class="text-center mt-2">
+                    <small class="text-muted">Relationships between key features</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Geographic Distribution Card -->
+    <div class="col-md-12" data-aos="fade-up">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-map-marked-alt"></i> Geographic Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="geo-plot" class="plot-container" style="height: 600px;"></div>
+                <div class="text-center mt-3">
+                    <p class="text-muted">
+                        <i class="fas fa-info-circle"></i> House values across California shown by location, colored by median house value, sized by population
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load plots when document is ready
+    document.addEventListener("DOMContentLoaded", function() {
+        // Load correlation plot
+        fetch('/api/correlation-plot')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('correlation-plot', plotData.data, plotData.layout);
+                
+                // Add toggle fullscreen functionality
+                document.getElementById('toggle-correlation').addEventListener('click', function() {
+                    const plot = document.getElementById('correlation-plot');
+                    if (plot.style.height === '600px') {
+                        plot.style.height = '400px';
+                        this.innerHTML = '<i class="fas fa-expand-alt"></i> Toggle Fullscreen';
+                    } else {
+                        plot.style.height = '600px';
+                        this.innerHTML = '<i class="fas fa-compress-alt"></i> Exit Fullscreen';
+                    }
+                    Plotly.relayout('correlation-plot', {
+                        autosize: true
+                    });
+                });
+            })
+            .catch(error => console.error('Error loading correlation plot:', error));
+        
+        // Load feature distributions
+        fetch('/api/feature-distributions')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('feature-distributions', plotData.data, plotData.layout);
+            })
+            .catch(error => console.error('Error loading feature distributions:', error));
+        
+        // Load target distribution plot
+        fetch('/api/target-distribution')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('target-plot', plotData.data, plotData.layout);
+            })
+            .catch(error => console.error('Error loading target distribution plot:', error));
+        
+        // Load scatter matrix
+        fetch('/api/scatter-matrix')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('scatter-matrix', plotData.data, plotData.layout);
+            })
+            .catch(error => console.error('Error loading scatter matrix:', error));
+        
+        // Load geographic plot
+        fetch('/api/geo-plot')
+            .then(response => response.json())
+            .then(plotData => {
+                Plotly.newPlot('geo-plot', plotData.data, plotData.layout);
+            })
+            .catch(error => console.error('Error loading geographic plot:', error));
+    });
+
+    // Make plots responsive
+    window.addEventListener('resize', function() {
+        Plotly.relayout('correlation-plot', {
+            autosize: true
+        });
+        Plotly.relayout('feature-distributions', {
+            autosize: true
+        });
+        Plotly.relayout('target-plot', {
+            autosize: true
+        });
+        Plotly.relayout('scatter-matrix', {
+            autosize: true
+        });
+        Plotly.relayout('geo-plot', {
+            autosize: true
+        });
+    });
+</script>
+{% endblock %}

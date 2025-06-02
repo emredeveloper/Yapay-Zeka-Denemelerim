@@ -1,0 +1,199 @@
+body {
+    padding-top: 70px;
+    background-color: #f5f7f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.plot-container {
+    width: 100%;
+    height: 400px;
+}
+
+.card {
+    border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.4rem;
+}
+
+.navbar-nav .nav-link {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+    width: 80%;
+}
+
+.table thead {
+    background-color: #f0f4f8;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Custom progress bar for metrics */
+.metric-progress {
+    height: 10px;
+    border-radius: 5px;
+}
+
+/* Custom badges */
+.badge-feature {
+    font-size: 0.9em;
+    padding: 5px 10px;
+    margin: 2px;
+    border-radius: 15px;
+}
+
+/* Animation for loading spinner */
+@keyframes spinner {
+    to {transform: rotate(360deg);}
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spinner 1s ease-in-out infinite;
+}
+
+/* Loading container */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+}
+
+/* Feature card hover effects */
+.feature-card {
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    background-color: #f8f9fa;
+}
+
+/* Fullscreen modal for plots */
+.fullscreen-modal .modal-dialog {
+    max-width: 95%;
+    height: 90%;
+    margin: 20px auto;
+}
+
+.fullscreen-modal .modal-content {
+    height: 100%;
+}
+
+.fullscreen-modal .modal-body {
+    height: calc(100% - 56px);
+    overflow: hidden;
+}
+
+.fullscreen-plot {
+    width: 100%;
+    height: 100%;
+}
+
+/* Custom tooltip */
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Custom color schemes for features */
+.feature-engineering-card {
+    border-left: 5px solid #28a745;
+}
+
+.model-card {
+    border-left: 5px solid #007bff;
+}
+
+.importance-card {
+    border-left: 5px solid #fd7e14;
+}
+
+.shap-card {
+    border-left: 5px solid #6f42c1;
+}
+
+/* Animated counters for metrics */
+.counter-box {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.counter-icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+    color: #007bff;
+}
+
+.counter-value {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.counter-label {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: #6c757d;
+}

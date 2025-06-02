@@ -1,0 +1,228 @@
+{% extends "layout.html" %}
+
+{% block title %}- Model Training{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">Model Training & Evaluation</h2>
+    <p class="page-subtitle">Analyzing model performance and feature engineering impact</p>
+</div>
+
+<!-- Feature Engineering Impact Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-magic"></i>
+        <h3>Feature Engineering Impact</h3>
+    </div>
+    <div class="card-body">
+        <!-- Metrics Row -->
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-label">Base Model</div>
+                <div class="metric-value">{{ (model_results.original_r2_score * 100)|round(2) }}%</div>
+                <div class="metric-change">R² Score</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Enhanced Model</div>
+                <div class="metric-value">{{ (model_results.r2_score * 100)|round(2) }}%</div>
+                <div class="metric-change">R² Score</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Improvement</div>
+                <div class="metric-value {% if model_results.improvement_r2 > 0 %}impact-positive{% else %}impact-negative{% endif %}">
+                    {{ "+" if model_results.improvement_r2 > 0 }}{{ (model_results.feature_engineering_impact)|round(2) }}%
+                </div>
+                <div class="metric-change {% if model_results.improvement_r2 > 0 %}positive{% else %}negative{% endif %}">
+                    <i class="fas {% if model_results.improvement_r2 > 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+                    Performance Change
+                </div>
+            </div>
+        </div>
+        
+        <!-- Impact Visualization -->
+        <div class="impact-indicator">
+            <div class="impact-value {% if model_results.improvement_r2 > 0 %}impact-positive{% else %}impact-negative{% endif %}">
+                {{ "+" if model_results.improvement_r2 > 0 }}{{ (model_results.improvement_r2 * 100)|round(2) }}%
+            </div>
+            <div class="flex-grow-1">
+                <div class="progress">
+                    <div class="impact-bar" style="width: {{ (model_results.feature_engineering_impact|abs)|round(2) }}%;" 
+                        data-value="{{ (model_results.feature_engineering_impact|abs)|round(2) }}"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2" style="display: flex; justify-content: space-between;">
+                    <small>Base Performance</small>
+                    <small>Enhanced Performance</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert -->
+        <div class="alert {% if model_results.improvement_r2 > 0 %}alert-success{% else %}alert-warning{% endif %}">
+            <i class="fas {% if model_results.improvement_r2 > 0 %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+            <div>
+                {% if model_results.improvement_r2 > 0 %}
+                Feature engineering has <strong>improved</strong> model performance by increasing R² score by {{ (model_results.improvement_r2 * 100)|round(2) }} percentage points.
+                {% else %}
+                Feature engineering has <strong>not improved</strong> model performance. Consider reviewing or refining the engineered features.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-chart-line"></i>
+        <h3>Performance Metrics</h3>
+    </div>
+    <div class="card-body">
+        <div class="metric-grid mb-4">
+            <div class="metric-card">
+                <div class="metric-label">R² Score</div>
+                <div class="metric-value">{{ (model_results.r2_score * 100)|round(2) }}%</div>
+                <div class="metric-change">Coefficient of Determination</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">RMSE</div>
+                <div class="metric-value">${{ model_results.rmse|round(2) }}</div>
+                <div class="metric-change">Root Mean Squared Error</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">MAE</div>
+                <div class="metric-value">${{ model_results.mae|round(2) }}</div>
+                <div class="metric-change">Mean Absolute Error</div>
+            </div>
+        </div>
+
+        <!-- Cross-Validation Table -->
+        <h4 class="mb-3" style="font-size: 1.1rem; font-weight: 600; color: var(--text-light);">Cross-Validation Results</h4>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fold</th>
+                        <th class="text-end">R² Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in model_results.cv_scores %}
+                    <tr>
+                        <td>Fold {{ loop.index }}</td>
+                        <td class="text-end">{{ (score * 100)|round(2) }}%</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="highlighted">
+                        <td><strong>Average</strong></td>
+                        <td class="text-end"><strong>{{ (model_results.cv_mean * 100)|round(2) }}% ± {{ (model_results.cv_std * 100)|round(2) }}%</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="display: flex; flex-wrap: wrap; margin: 0 -0.75rem;">
+    <div class="col-12 col-lg-7" style="flex: 0 0 auto; width: 58.33%; padding: 0 0.75rem;">
+        <!-- Prediction Plot -->
+        <div class="card" style="height: 100%;">
+            <div class="card-header">
+                <i class="fas fa-check-circle"></i>
+                <h3>Predictions vs Actual Values</h3>
+            </div>
+            <div class="card-body">
+                <div id="prediction-plot" class="plot-container" style="height: 350px;"></div>
+                <p class="text-center mt-3" style="color: var(--text-dark); font-size: 0.9rem; text-align: center; margin-top: 1rem;">
+                    Points closer to the diagonal line indicate better predictions
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-lg-5" style="flex: 0 0 auto; width: 41.67%; padding: 0 0.75rem;">
+        <!-- Model Details -->
+        <div class="card" style="height: 100%;">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i>
+                <h3>Model Information</h3>
+            </div>
+            <div class="card-body">
+                <h4 style="font-size: 1.1rem; font-weight: 600; color: var(--text-light);">Random Forest Regressor</h4>
+                <p style="color: var(--text-medium); margin-bottom: 1.5rem;">
+                    An ensemble learning method that constructs multiple decision trees during training and outputs the average prediction of all trees.
+                </p>
+                
+                <h4 style="font-size: 1.1rem; font-weight: 600; color: var(--text-light);">Configuration</h4>
+                <div class="feature-comparison">
+                    <div class="feature-row">
+                        <div class="feature-title">
+                            <div class="feature-icon">
+                                <i class="fas fa-tree"></i>
+                            </div>
+                            <div class="feature-name">n_estimators</div>
+                        </div>
+                        <div class="feature-badge">100</div>
+                    </div>
+                    <div class="feature-row">
+                        <div class="feature-title">
+                            <div class="feature-icon">
+                                <i class="fas fa-random"></i>
+                            </div>
+                            <div class="feature-name">random_state</div>
+                        </div>
+                        <div class="feature-badge">42</div>
+                    </div>
+                    <div class="feature-row">
+                        <div class="feature-title">
+                            <div class="feature-icon">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <div class="feature-name">n_jobs</div>
+                        </div>
+                        <div class="feature-badge">All CPUs (-1)</div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4" style="text-align: center; margin-top: 1.5rem;">
+                    <a href="/feature-importance" class="btn btn-primary">
+                        <i class="fas fa-chart-bar"></i> View Feature Importance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Load prediction plot
+        fetch('/api/prediction-plot')
+            .then(response => response.json())
+            .then(plotData => {
+                const layout = plotData.layout;
+                layout.paper_bgcolor = 'rgba(0,0,0,0)';
+                layout.plot_bgcolor = 'rgba(0,0,0,0)';
+                layout.font = {color: '#f3f4f6'};
+                layout.margin = {t: 10, r: 10, b: 50, l: 50};
+                
+                Plotly.newPlot('prediction-plot', plotData.data, layout, {
+                    responsive: true,
+                    displayModeBar: false
+                });
+            })
+            .catch(error => console.error('Error loading prediction plot:', error));
+    });
+
+    // Make plots responsive
+    window.addEventListener('resize', function() {
+        Plotly.relayout('prediction-plot', {
+            autosize: true
+        });
+    });
+</script>
+{% endblock %}

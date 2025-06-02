@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>İşlem Sonucu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .analysis-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #198754;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .buy-color { color: #198754; }
+        .sell-color { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">OllamaFinance</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Ana Sayfa</a>
+                <a class="nav-link" href="/portfolio">Portföyler</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="alert alert-success">
+            <h4 class="alert-heading">İşlem Başarıyla Gerçekleşti!</h4>
+            <p>{{ result.message }}</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">İşlem Detayları</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-5">Hisse:</div>
+                            <div class="col-7"><strong>{{ ticker }}</strong></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5">İşlem:</div>
+                            <div class="col-7">
+                                <strong class="{{ 'buy-color' if action == 'buy' else 'sell-color' }}">
+                                    {{ "ALIŞ" if action == "buy" else "SATIŞ" }}
+                                </strong>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5">Adet:</div>
+                            <div class="col-7"><strong>{{ "%.2f"|format(result.transaction.shares) }}</strong></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5">Fiyat:</div>
+                            <div class="col-7"><strong>${{ "%.2f"|format(result.transaction.price) }}</strong></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5">Toplam Tutar:</div>
+                            <div class="col-7"><strong>${{ "%.2f"|format(result.transaction.amount) }}</strong></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5">Kalan Nakit:</div>
+                            <div class="col-7"><strong>${{ "%.2f"|format(result.transaction.cash_after) }}</strong></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <h5>AI İşlem Analizi</h5>
+                    <p>{{ result.analysis.analysis|safe }}</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">İşlem Sonrası Portföy</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <h6 class="text-muted">Toplam Değer</h6>
+                                <div class="h4">${{ "%.2f"|format(result.portfolio_value) }}</div>
+                            </div>
+                            <div class="col-6">
+                                <h6 class="text-muted">Performans</h6>
+                                <div class="h4 {{ 'buy-color' if result.performance >= 0 else 'sell-color' }}">
+                                    {{ "%.2f"|format(result.performance) }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="/portfolio/{{ portfolio_id }}" class="btn btn-primary">Portföyü Görüntüle</a>
+                            <a href="/trade/{{ portfolio_id }}" class="btn btn-outline-success">Yeni İşlem Yap</a>
+                            <a href="/stock/{{ ticker }}" class="btn btn-outline-secondary">{{ ticker }} Detaylarını Gör</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

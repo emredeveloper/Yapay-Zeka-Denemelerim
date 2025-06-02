@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trade Simulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .portfolio-summary {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">OllamaFinance</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/portfolio">Portfolios</a>
+                    </li>
+                </ul>
+                <form class="d-flex" action="/search" method="POST">
+                    <input class="form-control me-2" type="search" name="query" placeholder="Enter ticker symbol" required>
+                    <button class="btn btn-outline-light" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1>Trade Simulation</h1>
+        
+        <div class="portfolio-summary">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>Portfolio Value</h5>
+                    <h3>${{ "%.2f"|format(portfolio.total_value) }}</h3>
+                </div>
+                <div class="col-md-4">
+                    <h5>Available Cash</h5>
+                    <h3>${{ "%.2f"|format(portfolio.cash) }}</h3>
+                </div>
+                <div class="col-md-4">
+                    <h5>Performance</h5>
+                    <h3 class="{% if portfolio.performance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ "%.2f"|format(portfolio.performance) }}%
+                    </h3>
+                </div>
+            </div>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Execute Trade</h5>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="ticker" class="form-label">Ticker Symbol</label>
+                        <input type="text" class="form-control" id="ticker" name="ticker" value="{{ ticker }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Action</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="action" id="buy" value="buy" checked>
+                            <label class="btn btn-outline-success" for="buy">BUY</label>
+                            
+                            <input type="radio" class="btn-check" name="action" id="sell" value="sell">
+                            <label class="btn btn-outline-danger" for="sell">SELL</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Trade Type</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="trade_type" id="by_amount" value="amount" checked>
+                            <label class="btn btn-outline-primary" for="by_amount">By Amount ($)</label>
+                            
+                            <input type="radio" class="btn-check" name="trade_type" id="by_shares" value="shares">
+                            <label class="btn btn-outline-primary" for="by_shares">By Shares</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="amountField">
+                        <label for="amount" class="form-label">Amount ($)</label>
+                        <input type="number" class="form-control" id="amount" name="amount" step="1" min="1" value="1000">
+                    </div>
+                    
+                    <div class="mb-3" id="sharesField" style="display: none;">
+                        <label for="shares" class="form-label">Number of Shares</label>
+                        <input type="number" class="form-control" id="shares" name="shares" step="1" min="1" value="10">
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="analyze" name="analyze" checked>
+                        <label class="form-check-label" for="analyze">Get AI analysis before executing trade</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Execute Trade</button>
+                    <a href="/portfolio/{{ portfolio.id }}" class="btn btn-link">Cancel</a>
+                </form>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h4>Current Holdings</h4>
+            {% if portfolio.holdings %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Shares</th>
+                        <th>Avg Price</th>
+                        <th>Current Price</th>
+                        <th>Value</th>
+                        <th>Profit/Loss</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for holding in portfolio.holdings %}
+                    <tr>
+                        <td><a href="/stock/{{ holding.ticker }}">{{ holding.ticker }}</a></td>
+                        <td>{{ "%.2f"|format(holding.shares) }}</td>
+                        <td>${{ "%.2f"|format(holding.avg_price) }}</td>
+                        <td>${{ "%.2f"|format(holding.current_price) }}</td>
+                        <td>${{ "%.2f"|format(holding.position_value) }}</td>
+                        <td class="{% if holding.gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            ${{ "%.2f"|format(holding.gain_loss) }} ({{ "%.2f"|format(holding.gain_loss_pct) }}%)
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info">No holdings yet. Make your first purchase!</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Toggle between amount and shares fields
+        document.querySelectorAll('input[name="trade_type"]').forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.value === 'amount') {
+                    document.getElementById('amountField').style.display = 'block';
+                    document.getElementById('sharesField').style.display = 'none';
+                } else {
+                    document.getElementById('amountField').style.display = 'none';
+                    document.getElementById('sharesField').style.display = 'block';
+                }
+            });
+        });
+        
+        // Pre-populate ticker dropdown when selecting sell
+        document.getElementById('sell').addEventListener('change', function() {
+            // You could dynamically populate a dropdown here with owned stocks
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
