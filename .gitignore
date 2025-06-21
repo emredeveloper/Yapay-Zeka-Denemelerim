@@ -1,3 +1,30 @@
-/.idea
-/.ipynb_checkpoints
-/.venv
+# IDE ve yapılandırma dosyaları
+.idea/
+.vscode/
+
+# Jupyter Notebook kontrol noktaları
+.ipynb_checkpoints/
+
+# Python sanal ortamları
+.venv/
+venv/
+*.egg-info/
+
+# Python derlenmiş dosyaları
+*.pyc
+__pycache__/
+
+# Derleme çıktıları
+build/
+dist/
+
+# Günlük dosyaları
+*.log
+
+# Veritabanı dosyaları
+*.sqlite3
+*.db
+
+# İşletim sistemi dosyaları
+.DS_Store
+Thumbs.db
