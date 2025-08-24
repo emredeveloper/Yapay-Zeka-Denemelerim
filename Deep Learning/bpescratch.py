@@ -1,3 +1,7 @@
+from huggingface import login
+login()
+
+
 corpus = [
     "This is the Hugging Face Course.",
     "This chapter is about tokenization.",

@@ -1,0 +1,8 @@
+.board{display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(3,72px);gap:8px}
+.board .cell{display:flex;align-items:center;justify-content:center;border:2px solid #999;font-weight:700;font-size:32px;border-radius:8px;color:#333;background:#fafafa;min-width:72px;min-height:72px}
+.board .cell.x{background:#e7f0ff;color:#1f5fd0}
+.board .cell.o{background:#ffe7ef;color:#c01448}
+.stream-box{height:360px;overflow:auto;border:1px solid #e5e5e5;border-radius:8px;padding:12px;background:#fff}
+.log-line{margin-bottom:6px}
+
+

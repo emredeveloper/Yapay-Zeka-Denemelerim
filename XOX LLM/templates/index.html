@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>XOX LM Studio Arena (Flask)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container py-4">
+      <div class="mb-4">
+        <h2 class="fw-bold">XOX LM Studio Arena</h2>
+        <p class="text-muted mb-0">İki yerel LM Studio modeli XOX oynar (canlı yayın).</p>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-12 col-lg-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label">Base URL</label>
+                <input id="base_url" class="form-control" value="{{ base_url }}" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">API Key</label>
+                <input id="api_key" type="password" class="form-control" value="{{ api_key }}" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">X Model (Gemma)</label>
+                <input id="model_x" class="form-control" value="{{ model_x }}" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">O Model (Qwen)</label>
+                <input id="model_o" class="form-control" value="{{ model_o }}" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Temperature</label>
+                <input id="temperature" type="number" step="0.05" min="0" max="1.5" class="form-control" value="0.1" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Top-p</label>
+                <input id="top_p" type="number" step="0.05" min="0.1" max="1.0" class="form-control" value="1.0" />
+              </div>
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="randomize_prompt" checked>
+                <label class="form-check-label" for="randomize_prompt">Rastgele bağlam anahtarı (nonce)</label>
+              </div>
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="random_start" checked>
+                <label class="form-check-label" for="random_start">Rastgele başlayan taraf</label>
+              </div>
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="analysis_mode" checked>
+                <label class="form-check-label" for="analysis_mode">Analiz + karar modu (kısa gerekçe)</label>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Analiz max tokens</label>
+                <input id="analysis_max_tokens" type="number" step="16" min="32" max="1024" class="form-control" value="128" />
+              </div>
+              <div class="d-grid gap-2">
+                <button id="start_btn" class="btn btn-primary">Maçı Başlat</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="row g-3 align-items-start">
+                <div class="col-12 col-md-6">
+                  <div id="board" class="board"> </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <div class="small text-muted">Canlı Akış</div>
+                  <div id="participants" class="alert alert-warning py-2 px-3 d-none"></div>
+                  <div id="stream" class="stream-box"></div>
+                  <div id="result" class="alert alert-info mt-3 d-none"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let evt = null;
+      const startBtn = document.getElementById('start_btn');
+      const boardDiv = document.getElementById('board');
+      const streamDiv = document.getElementById('stream');
+      const participantsDiv = document.getElementById('participants');
+      const resultDiv = document.getElementById('result');
+
+      function appendLine(html) {
+        const p = document.createElement('div');
+        p.className = 'log-line';
+        p.innerHTML = html;
+        streamDiv.appendChild(p);
+        streamDiv.scrollTop = streamDiv.scrollHeight;
+      }
+
+      function disableForm(disabled) {
+        document.getElementById('base_url').disabled = disabled;
+        document.getElementById('api_key').disabled = disabled;
+        document.getElementById('model_x').disabled = disabled;
+        document.getElementById('model_o').disabled = disabled;
+        document.getElementById('temperature').disabled = disabled;
+        startBtn.disabled = disabled;
+      }
+
+      startBtn.addEventListener('click', () => {
+        if (evt) {
+          evt.close();
+          evt = null;
+        }
+        streamDiv.innerHTML = '';
+        resultDiv.classList.add('d-none');
+        resultDiv.innerHTML = '';
+        participantsDiv.classList.add('d-none');
+        participantsDiv.innerHTML = '';
+
+        const base_url = encodeURIComponent(document.getElementById('base_url').value.trim());
+        const api_key = encodeURIComponent(document.getElementById('api_key').value.trim());
+        const model_x = encodeURIComponent(document.getElementById('model_x').value.trim());
+        const model_o = encodeURIComponent(document.getElementById('model_o').value.trim());
+        const temperature = encodeURIComponent(document.getElementById('temperature').value.trim());
+        const top_p = encodeURIComponent(document.getElementById('top_p').value.trim());
+        const randomize_prompt = document.getElementById('randomize_prompt').checked ? 'true' : 'false';
+        const random_start = document.getElementById('random_start').checked ? 'true' : 'false';
+        const analysis_mode = document.getElementById('analysis_mode').checked ? 'true' : 'false';
+        const analysis_max_tokens = encodeURIComponent(document.getElementById('analysis_max_tokens').value.trim());
+
+        const url = `/stream?base_url=${base_url}&api_key=${api_key}&model_x=${model_x}&model_o=${model_o}&temperature=${temperature}&top_p=${top_p}&randomize_prompt=${randomize_prompt}&random_start=${random_start}&analysis_mode=${analysis_mode}&analysis_max_tokens=${analysis_max_tokens}`;
+        evt = new EventSource(url);
+        disableForm(true);
+
+        appendLine('<span class="text-secondary">Maç başlatıldı...</span>');
+
+        evt.onmessage = (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (data.board_html) {
+              boardDiv.innerHTML = data.board_html;
+            }
+            if (data.type === 'start') {
+              const x = data.participants?.X || 'X';
+              const o = data.participants?.O || 'O';
+              participantsDiv.classList.remove('d-none');
+              participantsDiv.classList.remove('alert-info');
+              participantsDiv.classList.add('alert-warning');
+              participantsDiv.innerHTML = `<b>Kapışma Başlıyor!</b> <span class="badge bg-primary ms-2">X</span> ${x} <span class="ms-2 me-2">vs</span> <span class="badge bg-danger">O</span> ${o}`;
+              if (data.warnings && data.warnings.length > 0) {
+                appendLine(`<span class="text-warning">Uyarı: Bulunamayan modeller: ${data.warnings.join(', ')}</span>`);
+              }
+            }
+            if (data.type === 'move') {
+              const invalidNote = data.invalid ? ' <span class="badge bg-danger ms-1">geçersiz cevap, rastgele hamle</span>' : '';
+              appendLine(`<b>${data.move_number}. hamle</b> - <b>${data.symbol}</b> (${data.model}) → (${data.row},${data.col})${invalidNote}`);
+              if (data.raw) {
+                appendLine(`<code class="small">${String(data.raw).replace(/</g, '&lt;')}</code>`);
+              }
+            }
+            if (data.type === 'end') {
+              evt.close();
+              disableForm(false);
+              if (data.result === 'draw') {
+                resultDiv.classList.remove('d-none');
+                resultDiv.classList.remove('alert-success');
+                resultDiv.classList.add('alert-info');
+                resultDiv.innerHTML = 'Berabere!';
+              } else {
+                resultDiv.classList.remove('d-none');
+                resultDiv.classList.remove('alert-info');
+                resultDiv.classList.add('alert-success');
+                resultDiv.innerHTML = `Kazanan: <b>${data.result}</b> — Model: <b>${data.winner_model}</b>`;
+              }
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        };
+
+        evt.onerror = () => {
+          appendLine('<span class="text-danger">Akış hatası. Sunucuyu kontrol edin.</span>');
+          evt.close();
+          disableForm(false);
+        };
+      });
+    </script>
+  </body>
+  </html>
+
+
