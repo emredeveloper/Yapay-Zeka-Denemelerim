@@ -1,3 +1,16 @@
+# Model artifacts
+*.pkl
+
+# Generated JSON outputs
+*.jsonl
+*.json
+
+# Data files
+*.csv
+
+# Bytecode/cache
+__pycache__/
+*.pyc
 # IDE ve yapılandırma dosyaları
 .idea/
 .vscode/
