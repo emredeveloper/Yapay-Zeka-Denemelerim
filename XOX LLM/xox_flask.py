@@ -72,6 +72,73 @@ def render_board_html(board: Board) -> str:
 
 
 # -----------------------------
+# Simple engine (minimax-like heuristics)
+# -----------------------------
+
+
+def evaluate_board_for(player: str, board: Board) -> int:
+    """Heuristic: +10 for player win, -10 for opponent win, 0 otherwise."""
+    winner = check_winner(board)
+    if winner == player:
+        return 10
+    elif winner is not None and winner != player:
+        return -10
+    return 0
+
+
+def engine_best_move(player: str, board: Board) -> Tuple[int, int]:
+    """Pick a move that wins if possible, blocks opponent wins, else center, corner, random."""
+    moves = available_moves(board)
+    opponent = "O" if player == "X" else "X"
+
+    # 1) winning move
+    for r, c in moves:
+        board[r][c] = player
+        if check_winner(board) == player:
+            board[r][c] = " "
+            return r, c
+        board[r][c] = " "
+
+    # 2) block opponent winning move
+    for r, c in moves:
+        board[r][c] = opponent
+        if check_winner(board) == opponent:
+            board[r][c] = " "
+            return r, c
+        board[r][c] = " "
+
+    # 3) prefer center
+    if (1, 1) in moves:
+        return 1, 1
+
+    # 4) prefer corners
+    corners = [(0, 0), (0, 2), (2, 0), (2, 2)]
+    avail_corners = [m for m in corners if m in moves]
+    if avail_corners:
+        return random.choice(avail_corners)
+
+    # 5) pick random
+    return random.choice(moves)
+
+
+def leads_to_immediate_loss(player: str, move: Tuple[int, int], board: Board) -> bool:
+    """Return True if making `move` as `player` allows the opponent to win immediately next turn."""
+    r, c = move
+    if board[r][c] != " ":
+        return True
+    sim = [row[:] for row in board]
+    sim[r][c] = player
+    opponent = "O" if player == "X" else "X"
+    for orow, ocol in available_moves(sim):
+        sim[orow][ocol] = opponent
+        if check_winner(sim) == opponent:
+            return True
+        sim[orow][ocol] = " "
+    return False
+
+
+
+# -----------------------------
 # LM Studio (OpenAI-compatible) Client
 # -----------------------------
 
@@ -216,6 +283,8 @@ def build_move_request(
     analysis_mode: bool = False,
     move_number: int = 1,
     last_move: Optional[Dict[str, int]] = None,
+    history: Optional[List[Dict[str, int]]] = None,
+    previous_rationales: Optional[List[Dict[str, str]]] = None,
 ) -> Tuple[str, str]:
     assert player_symbol in ("X", "O")
     moves = available_moves(board)
@@ -248,6 +317,8 @@ def build_move_request(
         "board": structured_board,
         "available_moves": [{"row": r + 1, "col": c + 1} for r, c in moves],
         "last_move": last_move,
+        "history": history or [],
+        "previous_rationales": previous_rationales or [],
     }
     state_json = json.dumps(state, ensure_ascii=False)
 
@@ -269,23 +340,46 @@ def build_move_request(
 
 
 def parse_model_move(text: str) -> Optional[Tuple[int, int]]:
+    """Try to extract a JSON move and optional rationale from the model text.
+
+    Returns a tuple (row, col, rationale) where row/col are 0-based ints and
+    rationale is a string (or None) if available. Returns None if no valid move.
+    """
     if not text:
         return None
+
+    # Attempt to find a JSON object inside the text
     try:
-        data = json.loads(text)
-        r = int(data.get("row")) - 1
-        c = int(data.get("col")) - 1
-        if 0 <= r <= 2 and 0 <= c <= 2:
-            return r, c
+        # naive approach: find the first {...} that parses
+        start = text.find("{")
+        while start != -1:
+            end = text.find("}", start)
+            if end == -1:
+                break
+            candidate = text[start:end+1]
+            try:
+                data = json.loads(candidate)
+                if isinstance(data, dict) and "row" in data and "col" in data:
+                    r = int(data.get("row")) - 1
+                    c = int(data.get("col")) - 1
+                    if 0 <= r <= 2 and 0 <= c <= 2:
+                        # extract rationale as everything before the JSON object (trimmed)
+                        rationale = text[:start].strip() or None
+                        return (r, c, rationale)
+            except Exception:
+                pass
+            start = text.find("{", start+1)
     except Exception:
         pass
+
+    # Fallback: look for two digits or a single digit 1-9
     digits = [ch for ch in text if ch.isdigit()]
     if digits:
         try:
             idx = int(digits[0])
             if 1 <= idx <= 9:
                 idx -= 1
-                return idx // 3, idx % 3
+                return (idx // 3, idx % 3, None)
         except Exception:
             pass
     return None
@@ -300,7 +394,7 @@ def sse_format(data: Dict) -> str:
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-def match_stream(base_url: str, api_key: str, model_x: str, model_o: str, temperature: float, top_p: float, randomize_prompt: bool, random_start: bool, analysis_mode: bool, analysis_max_tokens: int):
+def match_stream(base_url: str, api_key: str, model_x: str, model_o: str, temperature: float, top_p: float, randomize_prompt: bool, random_start: bool, analysis_mode: bool, analysis_max_tokens: int, engine_fallback: bool = False):
     board = create_empty_board()
     models_available = list_models(base_url, api_key)
     warnings: List[str] = []
@@ -319,6 +413,9 @@ def match_stream(base_url: str, api_key: str, model_x: str, model_o: str, temper
     model_for_symbol = {"X": model_x, "O": model_o}
     move_number = 1
     nonce = f"{random.randint(100000, 999999)}" if randomize_prompt else None
+    last_move: Optional[Dict[str, int]] = None
+    history: List[Dict[str, int]] = []
+    previous_rationales: List[Dict[str, str]] = []
 
     while True:
         winner = check_winner(board)
@@ -338,10 +435,11 @@ def match_stream(base_url: str, api_key: str, model_x: str, model_o: str, temper
             break
 
         model_name = model_for_symbol[current_symbol]
-        last_mv = None
+        last_mv = last_move
         if move_number > 1:
-            # Infer last move from board diff is costly; here we keep it simple: send None for first move
-            # and fill on client based on stream if needed. Alternatively maintain history server-side.
+            # We keep last_move between iterations and pass it explicitly so the model can
+            # react to the opponent's most recent move. If last_move is None on later turns
+            # that's unexpected but harmless because the full board is still provided.
             pass
         sys_p, usr_p = build_move_request(
             board,
@@ -350,6 +448,8 @@ def match_stream(base_url: str, api_key: str, model_x: str, model_o: str, temper
             analysis_mode,
             move_number,
             last_mv,
+            history,
+            previous_rationales,
         )
         raw = call_model(
             model=model_name,
@@ -364,15 +464,44 @@ def match_stream(base_url: str, api_key: str, model_x: str, model_o: str, temper
         )
         parsed = parse_model_move(raw)
         moves = available_moves(board)
-        if not parsed or parsed not in moves:
+        rationale = None
+
+        # parsed may be a tuple (r, c, rationale) or None
+        if not parsed:
             chosen = random.choice(moves)
             invalid = True
         else:
-            chosen = parsed
-            invalid = False
+            if isinstance(parsed, tuple) and len(parsed) == 3:
+                r, c, rationale = parsed
+            elif isinstance(parsed, tuple) and len(parsed) >= 2:
+                r, c = parsed[0], parsed[1]
+            else:
+                chosen = random.choice(moves)
+                invalid = True
+                r = c = None
+
+            if r is not None and c is not None and (r, c) in moves:
+                chosen = (r, c)
+                invalid = False
+            else:
+                chosen = random.choice(moves)
+                invalid = True
+
+        # engine fallback: override obviously bad choices
+        if engine_fallback:
+            try_move = chosen
+            if invalid or leads_to_immediate_loss(current_symbol, try_move, board):
+                chosen = engine_best_move(current_symbol, board)
+                invalid = False
 
         r, c = chosen
         board[r][c] = current_symbol
+
+        # record this move and optional rationale
+        last_move = {"row": r + 1, "col": c + 1}
+        history.append({"symbol": current_symbol, "row": r + 1, "col": c + 1})
+        if analysis_mode and rationale:
+            previous_rationales.append({"move_number": move_number, "symbol": current_symbol, "rationale": rationale})
 
         yield sse_format({
             "type": "move",
@@ -388,6 +517,7 @@ def match_stream(base_url: str, api_key: str, model_x: str, model_o: str, temper
 
         move_number += 1
         current_symbol = "O" if current_symbol == "X" else "X"
+
 
 
 DEFAULT_BASE_URL = os.getenv("LM_STUDIO_BASE_URL", "http://localhost:1234/v1")
@@ -430,7 +560,9 @@ def stream():
     except Exception:
         analysis_max_tokens = 128
 
-    generator = match_stream(base_url, api_key, model_x, model_o, temperature, top_p, randomize_prompt, random_start, analysis_mode, analysis_max_tokens)
+    engine_fallback = request.args.get("engine_fallback", "false").lower() in ("1", "true", "yes")
+
+    generator = match_stream(base_url, api_key, model_x, model_o, temperature, top_p, randomize_prompt, random_start, analysis_mode, analysis_max_tokens, engine_fallback=engine_fallback)
     return Response(stream_with_context(generator), mimetype="text/event-stream")
 
 
