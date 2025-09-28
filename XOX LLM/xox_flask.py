@@ -201,7 +201,7 @@ def call_model(
     except urllib.error.HTTPError as e:
         return f"HTTPError {e.code}: {e.read().decode('utf-8', errors='ignore')}"
     except Exception as e:
-        return f"Hata: {e}"
+        return f"Error: {e}"
 
 
 # -----------------------------
@@ -223,21 +223,21 @@ def build_move_request(
     board_str = "\n".join(board_lines)
     if analysis_mode:
         system_prompt = (
-            f"Bir XOX (Tic-Tac-Toe) strateji analizörüsün ve '{player_symbol}' için en iyi hamleyi değerlendiriyorsun.\n"
-            "Kurallar: 3x3 tahta. Yatay/dikey/çapraz 3 aynı sembol kazanır.\n"
-            "Önce kısa gerekçe ver (2-3 adım ileri bakış), sonra SADECE JSON ver: {\"row\":1-3, \"col\":1-3}.\n"
-            "JSON harici metin içermesin — gerekçe ve JSON'u ayrı iki mesajda değil, tek döndür ama JSON dışına karakter koyma."
+            f"You are a Tic-Tac-Toe (XOX) strategy analyzer evaluating the best move for '{player_symbol}'.\n"
+            "Rules: 3x3 board. Three identical symbols in a row/column/diagonal wins.\n"
+            "First give a short rationale (2-3 steps of lookahead), then output ONLY JSON: {\"row\":1-3, \"col\":1-3}.\n"
+            "Do not include any non-JSON text — do not return rationale and JSON as separate messages; return a single output and do not add characters outside the JSON."
         )
     else:
         system_prompt = (
-            f"Sen bir XOX (Tic-Tac-Toe) oyuncususun ve '{player_symbol}' oynuyorsun.\n"
-            "Kurallar: 3x3 tahta. Yatay/dikey/çapraz 3 aynı sembol kazanır.\n"
-            "Hamle formatı: SADECE geçerli JSON: {\"row\":1-3, \"col\":1-3}.\n"
-            "Açıklama/yorum/kod bloğu YOK; sadece JSON.\nEşit iyi seçenek varsa rastgele seçebilirsin."
+            f"You are a Tic-Tac-Toe (XOX) player and you are playing as '{player_symbol}'.\n"
+            "Rules: 3x3 board. Three identical symbols in a row/column/diagonal wins.\n"
+            "Move format: ONLY valid JSON: {\"row\":1-3, \"col\":1-3}.\n"
+            "No explanations/comments/code blocks; only JSON.\nIf multiple equally good options exist, you may choose randomly."
         )
     if nonce:
-        system_prompt += f"\n(bağlam-anahtarı: {nonce})"
-    # Yapılandırılmış durum nesnesi (modelin tüm bilgiyi görmesi için)
+        system_prompt += f"\n(context-key: {nonce})"
+    # Structured state object (so the model can see all information)
     structured_board = [
         [None if cell == " " else cell for cell in row]
         for row in board
@@ -253,17 +253,17 @@ def build_move_request(
 
     if analysis_mode:
         user_prompt = (
-            "Tahta (boş hücreler '.' ile):\n" +
+            "Board (empty cells shown as '.'):\n" +
             board_str +
             "\nSTATE_JSON:\n" + state_json +
-            "\nKazanma/engelleme fırsatlarını değerlendir; kısa gerekçe üret ve SADECE JSON hamleyi döndür."
+            "\nEvaluate winning/blocking opportunities; produce a short rationale and return ONLY the JSON move."
         )
     else:
         user_prompt = (
-            "Mevcut tahta (boş hücreler '.' ile):\n" +
+            "Current board (empty cells shown as '.'):\n" +
             board_str +
             "\nSTATE_JSON:\n" + state_json +
-            "\nJSON hamleni ver: {\"row\":r, \"col\":c}"
+            "\nReturn your JSON move: {\"row\":r, \"col\":c}"
         )
     return system_prompt, user_prompt
 
