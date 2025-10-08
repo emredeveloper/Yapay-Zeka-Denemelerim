@@ -9,7 +9,7 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import json
 
-# NLTK için gerekli veri indirme (ilk kullanımda)
+# Download necessary data for NLTK (on first use)
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
@@ -18,11 +18,11 @@ except LookupError:
 class YouTubeVideoAnalyzer:
     def __init__(self, url, output_base_dir="youtube_analysis"):
         """
-        YouTube video analiz sınıfı
+        YouTube video analysis class
         
         Args:
-            url: YouTube video URL'si
-            output_base_dir: Çıktıların kaydedileceği ana klasör
+            url: YouTube video URL
+            output_base_dir: Main folder where outputs will be saved
         """
         self.url = url
         self.video_id = self._extract_video_id(url)
@@ -30,11 +30,11 @@ class YouTubeVideoAnalyzer:
         self.yt = None
         self.video_path = None
         
-        # Çıktı klasörlerini oluştur
+        # Create output directories
         self.setup_directories()
         
     def _extract_video_id(self, url):
-        """YouTube URL'sinden video ID'sini çıkar"""
+        """Extract video ID from YouTube URL"""
         patterns = [
             r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)',
             r'youtube\.com\/embed\/([^&\n?#]+)',
@@ -45,10 +45,10 @@ class YouTubeVideoAnalyzer:
             match = re.search(pattern, url)
             if match:
                 return match.group(1)
-        raise ValueError("Geçerli bir YouTube URL'si değil!")
+        raise ValueError("Not a valid YouTube URL!")
     
     def setup_directories(self):
-        """Çıktı klasörlerini oluştur"""
+        """Create output directories"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.project_dir = Path(self.output_base_dir) / f"{self.video_id}_{timestamp}"
         self.images_dir = self.project_dir / "images"
@@ -57,10 +57,10 @@ class YouTubeVideoAnalyzer:
         self.images_dir.mkdir(parents=True, exist_ok=True)
         self.text_dir.mkdir(parents=True, exist_ok=True)
         
-        print(f"✓ Çıktı klasörleri oluşturuldu: {self.project_dir}")
+        print(f"✓ Output directories created: {self.project_dir}")
     
     def get_video_info(self):
-        """Video hakkında bilgi al"""
+        """Get video information"""
         try:
             self.yt = YouTube(
                 self.url,
@@ -69,20 +69,20 @@ class YouTubeVideoAnalyzer:
             )
             
             info = {
-                "Başlık": self.yt.title,
-                "Kanal": self.yt.author,
-                "Görüntülenme": self.yt.views,
-                "Süre (saniye)": self.yt.length,
-                "Süre (dk:sn)": f"{self.yt.length // 60}:{self.yt.length % 60:02d}",
-                "Yayın Tarihi": str(self.yt.publish_date),
-                "Açıklama": self.yt.description[:200] + "..." if len(self.yt.description) > 200 else self.yt.description,
-                "Derecelendirme": self.yt.rating if hasattr(self.yt, 'rating') else "N/A",
+                "Title": self.yt.title,
+                "Channel": self.yt.author,
+                "Views": self.yt.views,
+                "Duration (seconds)": self.yt.length,
+                "Duration (mm:ss)": f"{self.yt.length // 60}:{self.yt.length % 60:02d}",
+                "Publish Date": str(self.yt.publish_date),
+                "Description": self.yt.description[:200] + "..." if len(self.yt.description) > 200 else self.yt.description,
+                "Rating": self.yt.rating if hasattr(self.yt, 'rating') else "N/A",
                 "Video ID": self.video_id,
                 "Thumbnail URL": self.yt.thumbnail_url
             }
             
             print("\n" + "="*60)
-            print("VIDEO BİLGİLERİ")
+            print("VIDEO INFORMATION")
             print("="*60)
             for key, value in info.items():
                 print(f"{key}: {value}")
@@ -91,29 +91,29 @@ class YouTubeVideoAnalyzer:
             return info
             
         except Exception as e:
-            print(f"⚠️  Video bilgisi alınırken hata: {e}")
-            print("⚠️  Temel bilgilerle devam ediliyor...")
-            # Temel bilgileri döndür
+            print(f"⚠️  Error getting video information: {e}")
+            print("⚠️  Continuing with basic information...")
+            # Return basic information
             return {
                 "Video ID": self.video_id,
                 "URL": self.url,
-                "Başlık": "Bilgi alınamadı",
-                "Kanal": "Bilgi alınamadı",
-                "Görüntülenme": "N/A",
-                "Süre (saniye)": 0,
-                "Süre (dk:sn)": "N/A",
-                "Yayın Tarihi": "N/A",
-                "Açıklama": "N/A",
-                "Derecelendirme": "N/A",
+                "Title": "Information not available",
+                "Channel": "Information not available",
+                "Views": "N/A",
+                "Duration (seconds)": 0,
+                "Duration (mm:ss)": "N/A",
+                "Publish Date": "N/A",
+                "Description": "N/A",
+                "Rating": "N/A",
                 "Thumbnail URL": f"https://img.youtube.com/vi/{self.video_id}/maxresdefault.jpg"
             }
     
     def download_video(self):
-        """Videoyu indir"""
+        """Download the video"""
         try:
-            print("📥 Video indiriliyor...")
+            print("📥 Downloading video...")
             
-            # Eğer YouTube objesi yoksa oluştur
+            # If YouTube object doesn't exist, create it
             if not self.yt:
                 self.yt = YouTube(
                     self.url,
@@ -125,102 +125,102 @@ class YouTubeVideoAnalyzer:
             
             if stream:
                 self.video_path = stream.download(output_path=str(self.project_dir), filename="video.mp4")
-                print(f"✓ Video indirildi: {self.video_path}")
+                print(f"✓ Video downloaded: {self.video_path}")
                 return True
             else:
-                print("⚠️  Uygun video stream'i bulunamadı!")
+                print("⚠️  No suitable video stream found!")
                 return False
                 
         except Exception as e:
-            print(f"⚠️  Video indirilirken hata: {e}")
-            print("⚠️  Video indirme atlanıyor, transkript analizi yapılacak...")
+            print(f"⚠️  Error while downloading video: {e}")
+            print("⚠️  Skipping video download, transcript analysis will be performed...")
             return False
     
     def get_transcript(self):
-        """Video transkriptini al"""
+        """Get video transcript"""
         try:
-            print("📝 Transkript alınıyor...")
+            print("📝 Getting transcript...")
             
-            # API instance oluştur
+            # Create API instance
             api = YouTubeTranscriptApi()
             
-            # Önce mevcut transkriptleri listele
+            # First list existing transcripts
             try:
                 transcript_list = api.list(self.video_id)
-                print(f"✓ Mevcut transkriptler tespit edildi")
+                print(f"✓ Existing transcripts detected")
                 
                 available_transcripts = []
                 for transcript in transcript_list:
-                    trans_type = "otomatik" if transcript.is_generated else "manuel"
+                    trans_type = "automatic" if transcript.is_generated else "manual"
                     available_transcripts.append(f"{transcript.language} ({trans_type})")
                 
                 if available_transcripts:
-                    print(f"  Mevcut diller: {', '.join(available_transcripts[:5])}")
+                    print(f"  Available languages: {', '.join(available_transcripts[:5])}")
                 
             except Exception as e:
-                print(f"⚠️  Transkript listesi alınamadı: {e}")
+                print(f"⚠️  Could not get transcript list: {e}")
                 transcript_list = None
             
             transcript_data = None
             
-            # 1. Direkt fetch dene (varsayılan dil)
+            # 1. Try direct fetch (default language)
             try:
                 transcript_data = api.fetch(self.video_id)
-                print(f"✓ Varsayılan transkript bulundu")
+                print(f"✓ Default transcript found")
             except Exception as e:
-                print(f"  Varsayılan transkript hatası: {str(e)[:100]}")
+                print(f"  Default transcript error: {str(e)[:100]}")
             
-            # 2. Manuel Türkçe/İngilizce transkript dene
+            # 2. Try manual Turkish/English transcript
             if not transcript_data and transcript_list:
                 for transcript in transcript_list:
                     if transcript.language_code in ['tr', 'en'] and not transcript.is_generated:
                         try:
                             transcript_data = transcript.fetch()
-                            print(f"✓ {transcript.language} manuel transkript bulundu")
+                            print(f"✓ {transcript.language} manual transcript found")
                             break
                         except:
                             continue
             
-            # 3. Otomatik İngilizce transkript dene
+            # 3. Try automatic English transcript
             if not transcript_data and transcript_list:
                 for transcript in transcript_list:
                     if transcript.language_code == 'en' and transcript.is_generated:
                         try:
                             transcript_data = transcript.fetch()
-                            print(f"✓ {transcript.language} otomatik transkript bulundu")
+                            print(f"✓ {transcript.language} automatic transcript found")
                             break
                         except:
                             continue
             
-            # 4. Herhangi bir transkript dene
+            # 4. Try any transcript
             if not transcript_data and transcript_list:
                 for transcript in transcript_list:
                     try:
                         transcript_data = transcript.fetch()
-                        print(f"✓ {transcript.language} transkript bulundu")
+                        print(f"✓ {transcript.language} transcript found")
                         break
                     except:
                         continue
             
             if not transcript_data:
-                print("❌ Hiçbir transkript alınamadı!")
-                print("   Bu video için transkript devre dışı olabilir.")
+                print("❌ No transcript could be obtained!")
+                print("   Transcript may be disabled for this video.")
                 return None, [], []
             
-            # Tam metni oluştur
+            # Create full text
             full_text = " ".join([entry.text for entry in transcript_data])
             
-            # Cümlelere ayır
+            # Split into sentences
             try:
                 sentences = sent_tokenize(full_text, language='english')
             except:
                 try:
                     sentences = sent_tokenize(full_text, language='turkish')
                 except:
-                    # Basit nokta ile ayırma
+                    # Simple dot splitting
                     sentences = [s.strip() for s in full_text.split('.') if s.strip()]
             
-            # Zaman damgalarıyla birlikte kaydet
+            # Save with timestamps
             transcript_with_time = []
             for entry in transcript_data:
                 transcript_with_time.append({
@@ -229,30 +229,30 @@ class YouTubeVideoAnalyzer:
                     'text': entry.text
                 })
             
-            print(f"✓ Toplam {len(transcript_data)} transkript segmenti alındı")
-            print(f"✓ Toplam {len(sentences)} cümle tespit edildi")
+            print(f"✓ Total {len(transcript_data)} transcript segments obtained")
+            print(f"✓ Total {len(sentences)} sentences detected")
             
             return full_text, transcript_with_time, sentences
             
         except Exception as e:
-            print(f"❌ Transkript alınırken kritik hata: {e}")
+            print(f"❌ Critical error while getting transcript: {e}")
             import traceback
             print(traceback.format_exc())
             return None, [], []
     
     def extract_frames(self, interval_seconds=30):
         """
-        Videodan belirli aralıklarla frame çıkar
+        Extract frames from video at specific intervals
         
         Args:
-            interval_seconds: Frame çıkarma aralığı (saniye)
+            interval_seconds: Frame extraction interval (seconds)
         """
         if not self.video_path or not os.path.exists(self.video_path):
-            print("❌ Video dosyası bulunamadı!")
+            print("❌ Video file not found!")
             return []
         
         try:
-            print(f"🖼️  Frame'ler çıkarılıyor (her {interval_seconds} saniyede bir)...")
+            print(f"🖼️  Extracting frames (every {interval_seconds} seconds)...")
             
             cap = cv2.VideoCapture(self.video_path)
             fps = cap.get(cv2.CAP_PROP_FPS)
@@ -290,31 +290,31 @@ class YouTubeVideoAnalyzer:
                 frame_num += 1
             
             cap.release()
-            print(f"✓ {len(extracted_frames)} frame çıkarıldı ve kaydedildi")
+            print(f"✓ {len(extracted_frames)} frames extracted and saved")
             
             return extracted_frames
             
         except Exception as e:
-            print(f"❌ Frame çıkarılırken hata: {e}")
+            print(f"❌ Error while extracting frames: {e}")
             return []
     
     def extract_sentence_frames(self, transcript_with_time, sentences):
         """
-        Her cümle veya soru bitiminde frame çıkar
+        Extract frames at the end of each sentence or question
         """
         if not self.video_path or not os.path.exists(self.video_path):
-            print("❌ Video dosyası bulunamadı!")
+            print("❌ Video file not found!")
             return []
         
         try:
-            print("🖼️  Cümle bitimlerinde frame'ler çıkarılıyor...")
+            print("🖼️  Extracting frames at sentence endings...")
             
             cap = cv2.VideoCapture(self.video_path)
             fps = cap.get(cv2.CAP_PROP_FPS)
             
             sentence_frames = []
             
-            # Cümle sonlarını tespit et (. ? ! ile bitenler)
+            # Detect sentence endings (ending with . ? !)
             sentence_end_times = []
             current_text = ""
             
@@ -322,7 +322,7 @@ class YouTubeVideoAnalyzer:
                 current_text += " " + entry['text']
                 text = current_text.strip()
                 
-                # Cümle veya soru bitişi kontrolü
+                # Check for sentence or question ending
                 if text.endswith('.') or text.endswith('?') or text.endswith('!'):
                     sentence_end_times.append({
                         'time': entry['start'] + entry['duration'],
@@ -330,7 +330,7 @@ class YouTubeVideoAnalyzer:
                     })
                     current_text = ""
             
-            # Her cümle bitiminde frame çıkar
+            # Extract frame at each sentence ending
             for idx, sentence_info in enumerate(sentence_end_times):
                 timestamp = sentence_info['time']
                 frame_position = int(timestamp * fps)
@@ -354,34 +354,34 @@ class YouTubeVideoAnalyzer:
                     })
             
             cap.release()
-            print(f"✓ {len(sentence_frames)} cümle bitimi frame'i çıkarıldı")
+            print(f"✓ {len(sentence_frames)} sentence ending frames extracted")
             
             return sentence_frames
             
         except Exception as e:
-            print(f"❌ Cümle frame'leri çıkarılırken hata: {e}")
+            print(f"❌ Error while extracting sentence frames: {e}")
             return []
     
     def save_text_data(self, video_info, full_text, transcript_with_time, sentences, sentence_frames):
-        """Metin verilerini kaydet"""
+        """Save text data"""
         try:
-            print("💾 Metin verileri kaydediliyor...")
+            print("💾 Saving text data...")
             
-            # 1. Video bilgilerini kaydet
+            # 1. Save video information
             info_path = self.text_dir / "video_info.txt"
             with open(info_path, 'w', encoding='utf-8') as f:
                 f.write("="*60 + "\n")
-                f.write("VIDEO BİLGİLERİ\n")
+                f.write("VIDEO INFORMATION\n")
                 f.write("="*60 + "\n\n")
                 for key, value in video_info.items():
                     f.write(f"{key}: {value}\n")
             
-            # 2. Tam transkript metni
+            # 2. Full transcript text
             text_path = self.text_dir / "full_transcript.txt"
             with open(text_path, 'w', encoding='utf-8') as f:
                 f.write(full_text)
             
-            # 3. Zaman damgalı transkript
+            # 3. Timed transcript
             timed_path = self.text_dir / "timed_transcript.txt"
             with open(timed_path, 'w', encoding='utf-8') as f:
                 for entry in transcript_with_time:
@@ -389,25 +389,25 @@ class YouTubeVideoAnalyzer:
                     seconds = int(entry['start'] % 60)
                     f.write(f"[{minutes:02d}:{seconds:02d}] {entry['text']}\n")
             
-            # 4. Cümleler
+            # 4. Sentences
             sentences_path = self.text_dir / "sentences.txt"
             with open(sentences_path, 'w', encoding='utf-8') as f:
                 for idx, sentence in enumerate(sentences, 1):
                     f.write(f"{idx}. {sentence}\n\n")
             
-            # 5. Cümle frame bilgileri
+            # 5. Sentence frame information
             if sentence_frames:
                 frames_info_path = self.text_dir / "sentence_frames_info.txt"
                 with open(frames_info_path, 'w', encoding='utf-8') as f:
-                    f.write("CÜMLE BİTİMİ FRAME'LERİ\n")
+                    f.write("SENTENCE ENDING FRAMES\n")
                     f.write("="*60 + "\n\n")
                     for frame_info in sentence_frames:
-                        f.write(f"Dosya: {frame_info['filename']}\n")
-                        f.write(f"Zaman: {frame_info['time_formatted']}\n")
-                        f.write(f"Cümle: {frame_info['sentence']}\n")
+                        f.write(f"File: {frame_info['filename']}\n")
+                        f.write(f"Time: {frame_info['time_formatted']}\n")
+                        f.write(f"Sentence: {frame_info['sentence']}\n")
                         f.write("-"*60 + "\n\n")
             
-            # 6. JSON formatında tüm veri
+            # 6. All data in JSON format
             json_path = self.text_dir / "analysis_data.json"
             analysis_data = {
                 'video_info': video_info,
@@ -418,159 +418,159 @@ class YouTubeVideoAnalyzer:
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(analysis_data, f, ensure_ascii=False, indent=2)
             
-            print(f"✓ Tüm metin verileri kaydedildi: {self.text_dir}")
+            print(f"✓ All text data saved: {self.text_dir}")
             
         except Exception as e:
-            print(f"❌ Metin verileri kaydedilirken hata: {e}")
+            print(f"❌ Error while saving text data: {e}")
     
     def generate_summary_report(self, video_info, full_text, sentence_frames, interval_frames):
-        """Özet rapor oluştur"""
+        """Generate summary report"""
         try:
             report_path = self.project_dir / "SUMMARY_REPORT.txt"
             
             with open(report_path, 'w', encoding='utf-8') as f:
                 f.write("="*70 + "\n")
-                f.write("YOUTUBE VİDEO ANALİZ RAPORU\n")
+                f.write("YOUTUBE VIDEO ANALYSIS REPORT\n")
                 f.write("="*70 + "\n\n")
                 
-                f.write("📊 VİDEO İSTATİSTİKLERİ\n")
+                f.write("📊 VIDEO STATISTICS\n")
                 f.write("-"*70 + "\n")
                 f.write(f"Video ID: {self.video_id}\n")
-                f.write(f"Başlık: {video_info.get('Başlık', 'N/A')}\n")
-                f.write(f"Kanal: {video_info.get('Kanal', 'N/A')}\n")
-                f.write(f"Görüntülenme: {video_info.get('Görüntülenme', 'N/A'):,}\n")
-                f.write(f"Süre: {video_info.get('Süre (dk:sn)', 'N/A')}\n")
-                f.write(f"Yayın Tarihi: {video_info.get('Yayın Tarihi', 'N/A')}\n\n")
+                f.write(f"Title: {video_info.get('Title', 'N/A')}\n")
+                f.write(f"Channel: {video_info.get('Channel', 'N/A')}\n")
+                f.write(f"Views: {video_info.get('Views', 'N/A'):,}\n")
+                f.write(f"Duration: {video_info.get('Duration (mm:ss)', 'N/A')}\n")
+                f.write(f"Publish Date: {video_info.get('Publish Date', 'N/A')}\n\n")
                 
-                f.write("📝 METİN ANALİZİ\n")
+                f.write("📝 TEXT ANALYSIS\n")
                 f.write("-"*70 + "\n")
                 if full_text:
                     words = full_text.split()
-                    f.write(f"Toplam Kelime Sayısı: {len(words):,}\n")
-                    f.write(f"Toplam Karakter Sayısı: {len(full_text):,}\n")
-                    f.write(f"Ortalama Kelime Uzunluğu: {sum(len(word) for word in words) / len(words):.2f}\n\n")
+                    f.write(f"Total Word Count: {len(words):,}\n")
+                    f.write(f"Total Character Count: {len(full_text):,}\n")
+                    f.write(f"Average Word Length: {sum(len(word) for word in words) / len(words):.2f}\n\n")
                 
-                f.write("🖼️  GÖRSEL ANALİZİ\n")
+                f.write("🖼️  VISUAL ANALYSIS\n")
                 f.write("-"*70 + "\n")
-                f.write(f"Cümle Bitimi Frame Sayısı: {len(sentence_frames)}\n")
-                f.write(f"Düzenli Aralık Frame Sayısı: {len(interval_frames)}\n")
-                f.write(f"Toplam Frame Sayısı: {len(sentence_frames) + len(interval_frames)}\n\n")
+                f.write(f"Sentence Ending Frame Count: {len(sentence_frames)}\n")
+                f.write(f"Regular Interval Frame Count: {len(interval_frames)}\n")
+                f.write(f"Total Frame Count: {len(sentence_frames) + len(interval_frames)}\n\n")
                 
-                f.write("📁 ÇIKTI DOSYALARI\n")
+                f.write("📁 OUTPUT FILES\n")
                 f.write("-"*70 + "\n")
-                f.write(f"Proje Klasörü: {self.project_dir}\n")
-                f.write(f"Görseller Klasörü: {self.images_dir}\n")
-                f.write(f"Metinler Klasörü: {self.text_dir}\n")
-                f.write(f"Video Dosyası: {self.video_path}\n\n")
+                f.write(f"Project Folder: {self.project_dir}\n")
+                f.write(f"Images Folder: {self.images_dir}\n")
+                f.write(f"Texts Folder: {self.text_dir}\n")
+                f.write(f"Video File: {self.video_path}\n\n")
                 
                 f.write("="*70 + "\n")
-                f.write(f"Analiz Tarihi: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write("="*70 + "\n")
             
-            print(f"\n✓ Özet rapor oluşturuldu: {report_path}")
+            print(f"\n✓ Summary report created: {report_path}")
             
         except Exception as e:
-            print(f"❌ Rapor oluşturulurken hata: {e}")
+            print(f"❌ Error while creating report: {e}")
     
     def analyze(self, extract_interval_frames=True, interval_seconds=30):
         """
-        Tam analiz yap
+        Perform full analysis
         
         Args:
-            extract_interval_frames: Düzenli aralıklarla frame çıkar (True/False)
-            interval_seconds: Frame çıkarma aralığı (saniye)
+            extract_interval_frames: Extract frames at regular intervals (True/False)
+            interval_seconds: Frame extraction interval (seconds)
         """
         print("\n" + "="*70)
-        print("🎬 YOUTUBE VİDEO ANALİZİ BAŞLIYOR")
+        print("🎬 YOUTUBE VIDEO ANALYSIS STARTING")
         print("="*70 + "\n")
         
-        # 1. Video bilgilerini al
+        # 1. Get video information
         video_info = self.get_video_info()
         
         # 2. Videoyu indir
         if not self.download_video():
-            print("⚠️  Video indirilemedi, sadece transkript analizi yapılacak")
+            print("⚠️  Video could not be downloaded, only transcript analysis will be performed")
         
-        # 3. Transkripti al
+        # 3. Get transcript
         full_text, transcript_with_time, sentences = self.get_transcript()
         
         if not full_text:
-            print("⚠️  Transkript alınamadı!")
+            print("⚠️  Transcript could not be obtained!")
             
-            # Video varsa sadece frame analizi yap
+            # If video exists, perform only frame analysis
             if self.video_path and os.path.exists(self.video_path):
-                print("📊 Video mevcut, sadece frame analizi yapılacak...")
+                print("📊 Video exists, only frame analysis will be performed...")
                 interval_frames = []
                 if extract_interval_frames:
                     interval_frames = self.extract_frames(interval_seconds)
                 
-                # Minimal rapor oluştur
+                # Create minimal report
                 self.generate_summary_report(video_info, "", [], interval_frames)
                 print("\n" + "="*70)
-                print("✅ ANALİZ TAMAMLANDI (Sadece Video Frame'leri)!")
+                print("✅ ANALYSIS COMPLETED (Only Video Frames)!")
                 print("="*70)
-                print(f"\n📁 Tüm çıktılar şurada: {self.project_dir}")
-                print(f"🖼️  Görseller: {self.images_dir}")
+                print(f"\n📁 All outputs here: {self.project_dir}")
+                print(f"🖼️  Images: {self.images_dir}")
                 print("\n")
                 return
             else:
-                print("❌ Ne transkript ne de video mevcut, analiz sonlandırılıyor!")
+                print("❌ Neither transcript nor video available, analysis terminated!")
                 return
         
-        # 4. Frame'leri çıkar
+        # 4. Extract frames
         sentence_frames = []
         interval_frames = []
         
         if self.video_path and os.path.exists(self.video_path):
-            # Cümle bitimlerinde frame'ler
+            # Frames at sentence endings
             sentence_frames = self.extract_sentence_frames(transcript_with_time, sentences)
             
-            # Düzenli aralıklarla frame'ler (isteğe bağlı)
+            # Frames at regular intervals (optional)
             if extract_interval_frames:
                 interval_frames = self.extract_frames(interval_seconds)
         else:
-            print("⚠️  Video dosyası yok, sadece transkript analizi yapıldı")
+            print("⚠️  Video file not available, only transcript analysis performed")
         
-        # 5. Metin verilerini kaydet
+        # 5. Save text data
         self.save_text_data(video_info, full_text, transcript_with_time, sentences, sentence_frames)
         
-        # 6. Özet rapor oluştur
+        # 6. Generate summary report
         self.generate_summary_report(video_info, full_text, sentence_frames, interval_frames)
         
         print("\n" + "="*70)
-        print("✅ ANALİZ TAMAMLANDI!")
+        print("✅ ANALYSIS COMPLETED!")
         print("="*70)
-        print(f"\n📁 Tüm çıktılar şurada: {self.project_dir}")
-        print(f"🖼️  Görseller: {self.images_dir}")
-        print(f"📝 Metinler: {self.text_dir}")
+        print(f"\n📁 All outputs here: {self.project_dir}")
+        print(f"🖼️  Images: {self.images_dir}")
+        print(f"📝 Texts: {self.text_dir}")
         print("\n")
 
 
 def main():
-    """Ana fonksiyon"""
+    """Main function"""
     print("\n" + "="*70)
-    print("🎥 YOUTUBE VİDEO ANALİZ ARACI")
+    print("🎥 YOUTUBE VIDEO ANALYSIS TOOL")
     print("="*70 + "\n")
     
-    # Kullanıcıdan URL al
-    url = input("YouTube video URL'sini girin: ").strip()
+    # Get URL from user
+    url = input("Enter YouTube video URL: ").strip()
     
     if not url:
-        print("❌ URL boş olamaz!")
+        print("❌ URL cannot be empty!")
         return
     
-    # Ayarlar
-    print("\n⚙️  Ayarlar:")
-    extract_interval = input("Düzenli aralıklarla frame çıkarılsın mı? (E/H, varsayılan: E): ").strip().upper()
-    extract_interval_frames = extract_interval != 'H'
+    # Settings
+    print("\n⚙️  Settings:")
+    extract_interval = input("Extract frames at regular intervals? (Y/N, default: Y): ").strip().upper()
+    extract_interval_frames = extract_interval != 'N'
     
     interval_seconds = 30
     if extract_interval_frames:
-        interval_input = input("Frame çıkarma aralığı (saniye, varsayılan: 30): ").strip()
+        interval_input = input("Frame extraction interval (seconds, default: 30): ").strip()
         if interval_input.isdigit():
             interval_seconds = int(interval_input)
     
-    # Analizi başlat
+    # Start analysis
     try:
         analyzer = YouTubeVideoAnalyzer(url)
         analyzer.analyze(
@@ -578,7 +578,7 @@ def main():
             interval_seconds=interval_seconds
         )
     except Exception as e:
-        print(f"\n❌ Hata oluştu: {e}")
+        print(f"\n❌ Error occurred: {e}")
         import traceback
         traceback.print_exc()
 

@@ -1,12 +1,12 @@
-# 🎥 YouTube Video Analiz Aracı + 🤖 AI
+# 🎥 YouTube Video Analyzer + 🤖 AI
 
 <div align="center">
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║  🚀 AI Destekli YouTube Video Analizi                            ║
-║  💬 Soru-Cevap | 🔍 Akıllı Arama | 🖼️ Görsel Analiz             ║
-║  ⚡ 70% Daha Hızlı | 🔒 %100 Local & Güvenli                    ║
+║  🚀 AI-Powered YouTube Video Analysis                            ║
+║  💬 Q&A | 🔍 Smart Search | 🖼️ Visual Analysis                  ║
+║  ⚡ 70% Faster | 🔒 100% Local & Secure                        ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
 
@@ -19,180 +19,180 @@
 
 ---
 
-> **🆕 Yeni!** Artık AI destekli video analizi, akıllı arama ve soru-cevap özelliği ile!
+> **🆕 New!** Now with AI-powered video analysis, smart search, and Q&A features!
 
-YouTube videolarından transkript, görsel frame'ler ve istatistiksel bilgiler çıkaran **+ Local AI entegrasyonlu** kapsamlı Python aracı.
+A comprehensive Python tool that extracts transcripts, visual frames, and statistical information from YouTube videos **+ Local AI integration**.
 
-## ⚡ Hızlı Başlangıç
+## ⚡ Quick Start
 
 ```bash
-# 1. Repo'yu klonla
+# 1. Clone the repository
 git clone <repo-url>
 cd Video-Analysis
 
-# 2. Python paketlerini yükle
+# 2. Install Python packages
 pip install -r requirements.txt
 
-# 3. Ollama'yı kur ve modelleri indir
+# 3. Install Ollama and download models
 ollama pull granite4:tiny-h
 ollama pull qwen2.5vl:3b
 
-# 4. Flask uygulamasını başlat
+# 4. Start the Flask application
 python app_flask.py
 
-# 5. Tarayıcıda aç
+# 5. Open in browser
 # http://localhost:5000
 ```
 
-**İlk kullanım:** Video URL'si gir → Analiz et → **AI Video Q&A** butonuna tıkla → Keyfini çıkar! 🎉
+**First use:** Enter video URL → Analyze → **AI Video Q&A** button → Enjoy! 🎉
 
-## 🚀 Neler Yapabilirsiniz?
+## 🚀 What Can You Do?
 
-- 🎬 YouTube videolarını otomatik analiz edin
-- 💬 **Video içeriği hakkında AI ile sohbet edin** (Türkçe!)
-- 🔍 **Akıllı arama**: "Kod görseli göster", "Grafik var mı?" gibi sorgular
-- 🖼️ **Her frame'i AI ile görsel analiz edin**
-- ⏯️ **Arama sonuçlarına tıklayın, video o andan başlasın!**
-- 📊 Detaylı istatistikler ve raporlar
-- 🌐 Modern web arayüzü (Flask)
+- 🎬 Automatically analyze YouTube videos
+- 💬 **Chat with AI about video content** (Turkish!)
+- 🔍 **Smart search**: "Show me code", "Is there a graph?" queries
+- 🖼️ **Perform visual analysis on each frame with AI**
+- ⏯️ **Click on search results, video starts from that moment!**
+- 📊 Detailed statistics and reports
+- 🌐 Modern web interface (Flask)
 
-## 🛠️ Teknoloji Stack
+## 🛠️ Technology Stack
 
 - **Backend**: Python 3.x, Flask 3.0+
 - **AI/LLM**: Ollama (Local)
-  - `granite4:tiny-h` → Metin Q&A (2B parametre)
-  - `qwen2.5vl:3b` → Görsel Analiz (Vision-Language)
-- **Video İşleme**: OpenCV, PyTube
+  - `granite4:tiny-h` → Text Q&A (2B parameters)
+  - `qwen2.5vl:3b` → Visual Analysis (Vision-Language)
+- **Video Processing**: OpenCV, PyTube
 - **Transkript**: youtube-transcript-api
 - **NLP**: NLTK
 - **Frontend**: Bootstrap 5, jQuery
 - **API**: YouTube IFrame API
 
-## 🌟 Özellikler
+## 🌟 Features
 
-### 🤖 **YENİ!** Yapay Zeka Özellikleri (Local Ollama)
-- **🎯 Akıllı Video Soru-Cevap**: Video içeriği hakkında doğal dilde sorular sorun, AI size cevap versin!
-  - � Gerçek zamanlı chat arayüzü
-  - 🧠 Video transkriptinden otomatik context çıkarma
-  - 🇹🇷 Türkçe dil desteği optimize edilmiş
-  - ⚡ Hızlı yanıt süresi (granite4:tiny-h modeli)
+### 🤖 **NEW!** AI Features (Local Ollama)
+- **🎯 Smart Video Question-Answer**: Ask questions in natural language about video content, AI will answer you!
+  - � Real-time chat interface
+  - 🧠 Automatic context extraction from video transcript
+  - 🇹🇷 Multi-language support optimized
+  - ⚡ Fast response time (granite4:tiny-h model)
   
-- **🔍 Gelişmiş Akıllı Arama**: 3 farklı arama modu!
-  - �📝 **Metin Arama**: Transkript içinde anahtar kelime araması
-  - 🖼️ **Görsel Arama**: "Kod görseli göster", "Grafik var mı?" gibi sorgular
-  - 🎨 **Hibrit Arama**: Metin + Görsel kombinasyonu (Optimize edilmiş!)
-  - ⏱️ 60 saniyeden → 10-30 saniyeye düşürülmüş arama süresi
-  - 🎯 Akıllı frame örnekleme stratejisi
+- **🔍 Advanced Smart Search**: 3 different search modes!
+  - �📝 **Text Search**: Keyword search within transcript
+  - 🖼️ **Visual Search**: "Show me code", "Is there a graph?" queries
+  - 🎨 **Hibrit Search**: Text + Visual combination (Optimized!)
+  - ⏱️ Search time reduced from 60 seconds to 10-30 seconds
+  - 🎯 Smart frame sampling strategy
   
-- **👁️ Frame Görsel Analizi**: Her frame'i AI ile analiz edin
-  - 🔬 Tek tıkla frame analizi
-  - 🎨 Görsel içerik tespiti (qwen2.5vl:3b vision modeli)
-  - 💡 Özel sorular sorabilme ("Bu görselde ne var?")
+- **👁️ Frame Visual Analysis**: Analyze each frame with AI
+  - 🔬 Frame analysis with one click
+  - 🎨 Visual content detection (qwen2.5vl:3b vision model)
+  - 💡 Ability to ask special questions ("What's in this image?")
   
-- **🎬 Akıllı Video Navigasyonu**:
-  - 🖱️ Arama sonuçlarına tıklayın, video otomatik o anı açsın!
-  - ⏯️ YouTube iframe entegrasyonu
-  - ⚡ Otomatik oynatma ile zaman kaybı yok
-  - 🎯 Frame'lerden direkt zaman damgası tespiti
+- **🎬 Smart Video Navigation**:
+  - 🖱️ Click on search results, video opens automatically at that moment!
+  - ⏯️ YouTube iframe integration
+  - ⚡ Autoplay with no time wasted
+  - 🎯 Direct timestamp detection from frames
 
-### 📝 Metin Analizi
-- **Tam Transkript**: Video'nun tüm konuşma metnini çıkarır
-- **Zaman Damgalı Transkript**: Her cümlenin zamanını gösterir
-- **Cümle Ayrıştırma**: Metni cümlelere ayırır
-- **Çoklu Dil Desteği**: Türkçe ve İngilizce transkript desteği
+### 📝 Text Analysis
+- **Full Transcript**: Extracts all speech text from the video
+- **Timestamped Transcript**: Shows time for each sentence
+- **Sentence Parsing**: Splits text into sentences
+- **Multi-language Support**: Turkish and English transcript support
 
-### 🖼️ Görsel Analizi
-- **Cümle Bitimi Frame'leri**: Her cümle veya soru bitiminde (. ? !) otomatik frame çıkarır
-- **Düzenli Aralık Frame'leri**: Belirlediğiniz saniye aralıklarında frame çıkarır
-- **Organize Klasör Yapısı**: Tüm görseller ayrı klasörde tutulur
-- **🆕 AI Frame Analizi**: Her frame'i vision model ile analiz edebilme
+### 🖼️ Visual Analysis
+- **Sentence End Frames**: Automatically extracts frames at the end of each sentence or question (. ? !)
+- **Regular Interval Frames**: Extracts frames at specified second intervals
+- **Organized Folder Structure**: All images stored in separate folders
+- **🆕 AI Frame Analysis**: Ability to analyze each frame with vision model
 
-### 📊 Video İstatistikleri
-- Video başlığı, kanal adı
-- Görüntülenme sayısı
-- Video süresi
-- Yayın tarihi
-- Kelime ve karakter sayısı
-- Frame istatistikleri
+### 📊 Video Statistics
+- Video title, channel name
+- View count
+- Video duration
+- Publication date
+- Word and character count
+- Frame statistics
 
-### 🌐 Web Arayüzü (Flask)
-- **Responsive Tasarım**: Bootstrap 5 ile modern arayüz
-- **Gerçek Zamanlı Chat**: AI ile interaktif sohbet
-- **Frame Galerisi**: Tüm frame'leri görsel olarak gezinme
-- **Akıllı Arama Paneli**: Metin, görsel ve hibrit arama seçenekleri
-- **Gömülü Video Player**: YouTube videoları direkt arayüzde izleyin
-- **Toast Bildirimleri**: Kullanıcı dostu geri bildirimler
+### 🌐 Web Interface (Flask)
+- **Responsive Design**: Modern interface with Bootstrap 5
+- **Real-time Chat**: Interactive conversation with AI
+- **Frame Gallery**: Visual browsing of all frames
+- **Smart Search Panel**: Text, visual and hybrid search options
+- **Embedded Video Player**: Watch YouTube videos directly in the interface
+- **Toast Notifications**: User-friendly feedback
 
-## 📦 Kurulum
+## 📦 Installation
 
-### 1️⃣ Python Gereksinimlerini Yükle
+### 1️⃣ Install Python Requirements
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Veya manuel olarak:
+Or manually:
 
 ```bash
 pip install flask opencv-python youtube-transcript-api pytube nltk requests
 ```
 
-### 2️⃣ Ollama'yı Kurun (AI Özellikleri İçin)
+### 2️⃣ Install Ollama (For AI Features)
 
 **Windows:**
-1. [Ollama.com](https://ollama.com/download) adresinden indirin
-2. Kurun ve otomatik başlatılacak
+1. Download from [Ollama.com](https://ollama.com/download)
+2. Install and it will start automatically
 
-**Modelleri İndirin:**
+**Download Models:**
 ```bash
 ollama pull granite4:tiny-h
 ollama pull qwen2.5vl:3b
 ```
 
-### 3️⃣ Flask Web Arayüzünü Başlatın
+### 3️⃣ Start Flask Web Interface
 
 ```bash
 python app_flask.py
 ```
 
-Tarayıcınızda açın: `http://localhost:5000`
+Open in browser: `http://localhost:5000`
 
-## 🚀 Kullanım
+## 🚀 Usage
 
-### 🌐 Web Arayüzü (Önerilen)
+### 🌐 Web Interface (Recommended)
 
-1. Flask uygulamasını başlatın: `python app_flask.py`
-2. Tarayıcıda `http://localhost:5000` adresine gidin
-3. YouTube URL'sini girin ve ayarları yapın
-4. Video analiz edilsin!
-5. **🆕 AI Video Q&A** butonuna tıklayarak:
-   - Video hakkında sorular sorun 💬
-   - Akıllı arama yapın 🔍
-   - Frame'leri AI ile analiz edin 🖼️
-   - Arama sonuçlarına tıklayarak videoyu o andan izleyin ▶️
+1. Start the Flask application: `python app_flask.py`
+2. Go to `http://localhost:5000` in browser
+3. Enter YouTube URL and configure settings
+4. Let the video be analyzed!
+5. **🆕 AI Video Q&A** button to:
+   - Ask questions about the video 💬
+   - Perform smart search 🔍
+   - Analyze frames with AI 🖼️
+   - Click on search results to watch video from that moment ▶️
 
-### 💻 Komut Satırı Kullanımı
+### 💻 Command Line Usage
 
 ```bash
 python youtube-app.py
 ```
 
-Program sizden şunları soracak:
-1. YouTube video URL'si
-2. Düzenli aralıklarla frame çıkarılsın mı? (E/H)
-3. Frame çıkarma aralığı (saniye)
+The program will ask you for:
+1. YouTube video URL
+2. Extract frames at regular intervals? (Y/N)
+3. Frame extraction interval (seconds)
 
-### Örnek
+### Example
 
 ```
-YouTube video URL'sini girin: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+Enter YouTube video URL: https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
-⚙️  Ayarlar:
-Düzenli aralıklarla frame çıkarılsın mı? (E/H, varsayılan: E): E
-Frame çıkarma aralığı (saniye, varsayılan: 30): 20
+⚙️  Settings:
+Extract frames at regular intervals? (Y/N, default: Y): Y
+Frame extraction interval (seconds, default: 30): 20
 ```
 
-## 📁 Çıktı Yapısı
+## 📁 Output Structure
 
 ```
 youtube_analysis/
@@ -213,57 +213,57 @@ youtube_analysis/
     └── SUMMARY_REPORT.txt
 ```
 
-### Dosya Açıklamaları
+### File Descriptions
 
-#### 📂 images/ klasörü
-- `sentence_XXXX_*.jpg`: Cümle bitimlerinde çıkarılan frame'ler
-- `frame_XXXX_*.jpg`: Düzenli aralıklarla çıkarılan frame'ler
+#### 📂 images/ folder
+- `sentence_XXXX_*.jpg`: Frames extracted at sentence endings
+- `frame_XXXX_*.jpg`: Frames extracted at regular intervals
 
-#### 📂 text/ klasörü
-- `video_info.txt`: Video hakkında genel bilgiler
-- `full_transcript.txt`: Tam transkript metni
-- `timed_transcript.txt`: Zaman damgalı transkript
-- `sentences.txt`: Cümlelere ayrılmış metin
-- `sentence_frames_info.txt`: Her cümle frame'i hakkında bilgi
-- `analysis_data.json`: Tüm verinin JSON formatı
+#### 📂 text/ folder
+- `video_info.txt`: General information about the video
+- `full_transcript.txt`: Full transcript text
+- `timed_transcript.txt`: Timestamped transcript
+- `sentences.txt`: Text divided into sentences
+- `sentence_frames_info.txt`: Information about each sentence frame
+- `analysis_data.json`: All data in JSON format
 
-#### 📄 Diğer dosyalar
-- `video.mp4`: İndirilen video dosyası
-- `SUMMARY_REPORT.txt`: Genel özet rapor
+#### 📄 Other files
+- `video.mp4`: Downloaded video file
+- `SUMMARY_REPORT.txt`: General summary report
 
-## 💡 Programatik Kullanım
+## 💡 Programmatic Usage
 
 ```python
 from youtube_app import YouTubeVideoAnalyzer
 
-# Analyzer oluştur
+# Create analyzer
 analyzer = YouTubeVideoAnalyzer(
     url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     output_base_dir="my_analysis"
 )
 
-# Analizi çalıştır
+# Run analysis
 analyzer.analyze(
-    extract_interval_frames=True,  # Düzenli aralıklarla frame çıkar
-    interval_seconds=30             # 30 saniyede bir frame
+    extract_interval_frames=True,  # Extract frames at regular intervals
+    interval_seconds=30             # Frame every 30 seconds
 )
 ```
 
-## 🔧 Özelleştirme
+## 🔧 Customization
 
-### Frame Çıkarma Aralığını Değiştir
-
-```python
-analyzer.analyze(interval_seconds=15)  # Her 15 saniyede bir
-```
-
-### Sadece Cümle Frame'leri
+### Change Frame Extraction Interval
 
 ```python
-analyzer.analyze(extract_interval_frames=False)  # Düzenli frame'leri devre dışı bırak
+analyzer.analyze(interval_seconds=15)  # Every 15 seconds
 ```
 
-### Farklı Çıktı Klasörü
+### Sentence Frames Only
+
+```python
+analyzer.analyze(extract_interval_frames=False)  # Disable regular frames
+```
+
+### Different Output Directory
 
 ```python
 analyzer = YouTubeVideoAnalyzer(
@@ -272,211 +272,211 @@ analyzer = YouTubeVideoAnalyzer(
 )
 ```
 
-## 📊 Örnek Çıktı
+## 📊 Sample Output
 
-### Video Bilgileri
+### Video Information
 ```
-Başlık: Örnek Video Başlığı
-Kanal: Kanal Adı
-Görüntülenme: 1,234,567
-Süre: 10:45
-Yayın Tarihi: 2024-01-15
-```
-
-### Metin Analizi
-```
-Toplam Kelime Sayısı: 1,234
-Toplam Karakter Sayısı: 7,890
-Cümle Sayısı: 56
+Title: Sample Video Title
+Channel: Channel Name
+Views: 1,234,567
+Duration: 10:45
+Publish Date: 2024-01-15
 ```
 
-### Görsel Analizi
+### Text Analysis
 ```
-Cümle Bitimi Frame Sayısı: 56
-Düzenli Aralık Frame Sayısı: 21
-Toplam Frame Sayısı: 77
+Total Word Count: 1,234
+Total Character Count: 7,890
+Sentence Count: 56
 ```
 
-## ⚠️ Dikkat Edilmesi Gerekenler
+### Visual Analysis
+```
+Sentence End Frame Count: 56
+Regular Interval Frame Count: 21
+Total Frame Count: 77
+```
 
-1. **Transkript Durumu**: Bazı videolarda transkript olmayabilir
-2. **Video İndirme**: Bazı videolar telif hakkı nedeniyle indirilemeyebilir
-3. **İnternet Bağlantısı**: Video indirme için stabil internet gereklidir
-4. **Disk Alanı**: Uzun videolar çok yer kaplayabilir
-5. **🆕 Ollama Gereksinimleri**: AI özellikleri için Ollama sunucusu çalışıyor olmalı
-   - Minimum 8GB RAM önerilir
-   - GPU varsa çok daha hızlı çalışır
-6. **🆕 İlk Kullanım**: Modeller ilk kullanımda indirilir (toplam ~4GB)
+## ⚠️ Important Notes
 
-## 🐛 Hata Çözümleri
+1. **Transcript Status**: Some videos may not have transcripts
+2. **Video Download**: Some videos cannot be downloaded due to copyright
+3. **Internet Connection**: Stable internet is required for video download
+4. **Disk Space**: Long videos can take up a lot of space
+5. **🆕 Ollama Requirements**: Ollama server must be running for AI features
+   - Minimum 8GB RAM recommended
+   - Much faster with GPU
+6. **🆕 First Use**: Models are downloaded on first use (total ~4GB)
 
-### "Transkript bulunamadı" hatası
-- Video'da transkript olmayabilir
-- Video gizli veya kısıtlı olabilir
+## 🐛 Error Solutions
 
-### "Video indirilemedi" hatası
-- İnternet bağlantınızı kontrol edin
-- Video telif hakkı korumalı olabilir
-- Farklı bir video URL'si deneyin
+### "Transcript not found" error
+- Video may not have a transcript
+- Video may be private or restricted
 
-### 🆕 "Ollama'ya bağlanılamıyor" hatası
+### "Video could not be downloaded" error
+- Check your internet connection
+- Video may be copyright protected
+- Try a different video URL
+
+### 🆕 "Cannot connect to Ollama" error
 ```bash
-# Ollama servisini başlatın
+# Start Ollama service
 ollama serve
 ```
-Veya Windows'ta Ollama uygulamasının çalıştığından emin olun.
+Or make sure Ollama application is running on Windows.
 
-### 🆕 "Model bulunamadı" hatası
+### 🆕 "Model not found" error
 ```bash
-# Gerekli modelleri indirin
+# Download required models
 ollama pull granite4:tiny-h
 ollama pull qwen2.5vl:3b
 ```
 
-### 🆕 Yavaş Arama Sonuçları
-- **Çözüm 1**: "Metin" veya "Hibrit" arama modunu kullanın (daha hızlı)
-- **Çözüm 2**: Daha kısa videolarla test edin
-- **Çözüm 3**: GPU'nuz varsa Ollama otomatik kullanacaktır
+### 🆕 Slow Search Results
+- **Solution 1**: Use "Text" or "Hybrid" search mode (faster)
+- **Solution 2**: Test with shorter videos
+- **Solution 3**: Ollama will automatically use GPU if available
 
-### NLTK veri hatası
-İlk kullanımda otomatik olarak indirilir, manuel indirmek için:
+### NLTK data error
+Downloaded automatically on first use, to download manually:
 ```python
 import nltk
 nltk.download('punkt')
 ```
 
-## 🎯 Performans İpuçları
+## 🎯 Performance Tips
 
-### Arama Hızını Artırma
-- **Hibrit Arama**: Önce metin ara, sonra sadece ilgili frame'leri analiz et (60-70% daha hızlı!)
-- **Metin Arama**: Sadece transkript içinde arama yap (anında sonuç)
-- **Görsel Arama**: 10 frame örnekleme ile optimize edildi (~20-30 saniye)
+### Increasing Search Speed
+- **Hybrid Search**: Search text first, then analyze only relevant frames (60-70% faster!)
+- **Text Search**: Search only within transcript (instant results)
+- **Visual Search**: Optimized with 10 frame sampling (~20-30 seconds)
 
-### AI Yanıt Kalitesini Artırma
-- Spesifik sorular sorun: "Videoda neler anlatılıyor?" yerine "Video hangi teknolojiden bahsediyor?"
-- Frame analizi kullanın: "Bu görselde ne var?" yerine "Bu görseldeki kod hangi dilde yazılmış?"
+### Improving AI Response Quality
+- Ask specific questions: Instead of "What's being discussed in the video?", ask "What technology is the video talking about?"
+- Use frame analysis: Instead of "What's in this image?", ask "What programming language is the code in this image written in?"
 
-## 📝 Notlar
+## 📝 Notes
 
-- Frame çıkarma işlemi video uzunluğuna göre zaman alabilir
-- Yüksek çözünürlüklü videolar daha fazla disk alanı kaplar
-- Cümle tespiti NLTK kütüphanesi ile yapılır (Türkçe ve İngilizce destekli)
-- **🆕 AI özellikleri tamamen local çalışır** - verileriniz dışarı çıkmaz!
-- **🆕 İlk model indirmesi** birkaç dakika sürebilir (sadece bir kez)
+- Frame extraction process can take time depending on video length
+- High-resolution videos take up more disk space
+- Sentence detection is done with NLTK library (Turkish and English supported)
+- **🆕 AI features run completely local** - your data doesn't go out!
+- **🆕 First model download** may take a few minutes (only once)
 
-## 🎬 Özellik Gösterimleri
+## 🎬 Feature Demonstrations
 
 ### 💬 AI Video Q&A
 ```
-👤 "Bu videoda hangi konular anlatılıyor?"
-🤖 "Videoda yapay zeka, makine öğrenmesi ve derin öğrenme konuları ele alınıyor..."
+👤 "What topics are discussed in this video?"
+🤖 "The video covers artificial intelligence, machine learning, and deep learning topics..."
 
-👤 "5. dakikada ne anlatılıyor?"
-� "5. dakikada neural network mimarileri ve activation fonksiyonları detaylı olarak açıklanıyor..."
+👤 "What's being discussed at 5 minutes?"
+🤖 "At 5 minutes, neural network architectures and activation functions are explained in detail..."
 ```
 
-### 🔍 Akıllı Arama Örnekleri
-- **Metin Arama**: "machine learning" → Tüm bahsedilen anlar listelensin
-- **Görsel Arama**: "kod görseli" → Ekranda kod olan tüm anları bul
-- **Hibrit Arama**: "python kod" → Hem "python" kelimesi geçen hem de kod görseli olan anlar
+### 🔍 Smart Search Examples
+- **Text Search**: "machine learning" → List all mentioned moments
+- **Visual Search**: "code image" → Find all moments with code on screen
+- **Hybrid Search**: "python code" → Find moments with both "python" word and code visuals
 
-### 🖼️ Frame Analizi
+### 🖼️ Frame Analysis
 ```
-🖼️ Frame'e tıkla → AI Analiz Et
-🤖 "Bu görselde Python dilinde yazılmış bir for döngüsü ve liste comprehension örneği bulunuyor. 
-    Kodda enumerate() fonksiyonu kullanılmış..."
-```
-
-### ⏯️ Akıllı Video Navigasyonu
-```
-🔍 Arama yap → Sonuç kartına tıkla → 🎬 Video otomatik o andan başlasın!
-"Tam istediğim sahne!" ✅
+🖼️ Click on frame → AI Analyze
+🤖 "This image shows a for loop and list comprehension example written in Python. 
+    The code uses the enumerate() function..."
 ```
 
-## 🌟 Neden Bu Araç?
+### ⏯️ Smart Video Navigation
+```
+🔍 Search → Click on result card → 🎬 Video automatically starts from that moment!
+"Exactly the scene I wanted!" ✅
+```
 
-| Özellik | Geleneksel Yöntem | Bu Araç |
+## 🌟 Why This Tool?
+
+| Feature | Traditional Method | This Tool |
 |---------|-------------------|---------|
-| Video Arama | Manuel izleme, not alma | AI destekli, otomatik timestampler |
-| Frame Çıkarma | Elle screenshot | Otomatik, zaman damgalı |
-| İçerik Analizi | İzleyip not al | AI'ya sor, direkt cevap al |
-| Görsel Arama | İmkansız | "Grafik göster" diye ara! |
-| Gizlilik | Cloud servislere veri gönderme | %100 local, güvenli |
-| Hız | Saatler | Dakikalar |
+| Video Search | Manual watching, note taking | AI-powered, automatic timestamps |
+| Frame Extraction | Manual screenshots | Automatic, timestamped |
+| Content Analysis | Watch and take notes | Ask AI, get direct answers |
+| Visual Search | Impossible | Search "show graph"! |
+| Privacy | Send data to cloud services | 100% local, secure |
+| Speed | Hours | Minutes |
 
-## 📊 Performans Karşılaştırması
+## 📊 Performance Comparison
 
-**Önceki Versiyon vs Yeni Versiyon (AI Özellikli)**
+**Previous Version vs New Version (AI-Featured)**
 
-- ❌ **Eski**: Frame analizi yok
-- ✅ **Yeni**: AI ile görsel içerik analizi
+- ❌ **Old**: No frame analysis
+- ✅ **New**: AI-powered visual content analysis
 
-- ❌ **Eski**: Manuel transkript okuma
-- ✅ **Yeni**: "Ne anlatılıyor?" diye sor, AI cevaplasın
+- ❌ **Old**: Manual transcript reading
+- ✅ **New**: Ask "What's being discussed?", AI answers
 
-- ❌ **Eski**: Görsel arama yok
-- ✅ **Yeni**: "Grafik göster" diye ara, AI bulsun
+- ❌ **Old**: No visual search
+- ✅ **New**: Search "show graph", AI finds it
 
-- ⏱️ **Arama Süresi**: 60-100 saniye → 10-30 saniye (**70% daha hızlı!**)
+- ⏱️ **Search Duration**: 60-100 seconds → 10-30 seconds (**70% faster!**)
 
-## �🤝 Katkıda Bulunma
+## 🤝 Contributing
 
-Önerileriniz ve katkılarınız için GitHub üzerinden pull request gönderebilirsiniz.
+You can send pull requests on GitHub for your suggestions and contributions.
 
-### Geliştirme Fikirleri
-- [ ] Batch video işleme
-- [ ] Video karşılaştırma özelliği
-- [ ] Bookmark/favori sistem
+### Development Ideas
+- [ ] Batch video processing
+- [ ] Video comparison feature
+- [ ] Bookmark/favorite system
 - [ ] Export Q&A history
-- [ ] WebSocket ile real-time progress
-- [ ] Daha fazla LLM model desteği
-- [ ] Video özetleme özelliği
+- [ ] Real-time progress with WebSocket
+- [ ] More LLM model support
+- [ ] Video summarization feature
 
-## 🎓 Kullanım Senaryoları
+## 🎓 Usage Scenarios
 
-### 🎯 Eğitim & Öğrenme
-- Ders videolarını analiz edin
-- Spesifik konuları hızla bulun: "Bu videoda machine learning nerede anlatılıyor?"
-- Kod örneklerini çıkarın: "Python kod örneklerini göster"
+### 🎯 Education & Learning
+- Analyze lecture videos
+- Quickly find specific topics: "Where is machine learning discussed in this video?"
+- Extract code examples: "Show Python code examples"
 
-### 📊 İçerik Analizi
-- Uzun röportajları analiz edin
-- Ana konuları tespit edin
-- Önemli anları bookmark'layın
+### 📊 Content Analysis
+- Analyze long interviews
+- Identify main topics
+- Bookmark important moments
 
-### � Araştırma
-- Teknik sunumları analiz edin
-- Grafik ve diyagramları çıkarın: "Grafik göster"
-- Belirli terimlerin geçtiği anları bulun
+### 🔬 Research
+- Analyze technical presentations
+- Extract graphs and diagrams: "Show graphs"
+- Find moments where specific terms are mentioned
 
-### 🎬 İçerik Üretimi
-- Video scriptlerini çıkarın
-- Önemli frame'leri thumbnail için kullanın
-- Video içeriğini kategorize edin
+### 🎬 Content Creation
+- Extract video scripts
+- Use important frames for thumbnails
+- Categorize video content
 
-## �📄 Lisans
+## 📄 License
 
-Bu proje MIT lisansı altında lisanslanmıştır.
+This project is licensed under the MIT license.
 
 ---
 
 <div align="center">
 
-### 🌟 Bu Projeyi Beğendiniz mi?
+### 🌟 Did you like this project?
 
-⭐ **Star verin** - Projenin gelişmesine destek olun!  
-🐛 **Issue açın** - Hata bulduğunuzda bildirin  
-🤝 **PR gönderin** - Katkıda bulunun  
-💬 **Paylaşın** - Arkadaşlarınıza önerin  
-
----
-
-**Yapımcı:** [Emre Developer](https://github.com/emredeveloper)  
-**Teknoloji:** Python 🐍 | Flask 🌶️ | Ollama 🤖 | OpenCV 📹  
-**Versiyon:** 2.0 (AI-Powered) 🚀  
+⭐ **Give a star** - Support the project's development!  
+🐛 **Open an issue** - Report if you find errors  
+🤝 **Send a PR** - Contribute  
+💬 **Share** - Recommend to your friends  
 
 ---
 
-*"AI ile videolarınızı daha akıllı analiz edin!"* ✨
+**Producer:** [Emre Developer](https://github.com/emredeveloper)  
+**Technology:** Python 🐍 | Flask 🌶️ | Ollama 🤖 | OpenCV 📹  
+**Version:** 2.0 (AI-Powered) 🚀  
+
+---
+
+*"Analyze your videos smarter with AI!"* ✨
 
 </div>
