@@ -7,21 +7,21 @@
         <div class="col-lg-8 mx-auto text-center">
             <h1 class="display-4 mb-3">
                 <i class="bi bi-camera-video text-primary"></i>
-                YouTube Video Analiz Aracı
+                YouTube Video Analysis Tool
             </h1>
             <p class="lead text-muted">
-                YouTube videolarından transkript, görsel frame'ler ve detaylı istatistikler çıkarın
+                Extract transcripts, visual frames and detailed statistics from YouTube videos
             </p>
         </div>
     </div>
 
-    <!-- Analiz Formu -->
+    <!-- Analysis Formu -->
     <div class="row">
         <div class="col-lg-8 mx-auto">
             <div class="card shadow">
                 <div class="card-body p-4">
                     <h3 class="card-title mb-4">
-                        <i class="bi bi-play-circle"></i> Video Analizi Başlat
+                        <i class="bi bi-play-circle"></i> Start Video Analysis
                     </h3>
                     
                     <form id="analyzeForm">
@@ -47,10 +47,10 @@
                         <div class="card bg-light mb-4">
                             <div class="card-body">
                                 <h5 class="card-title mb-3">
-                                    <i class="bi bi-gear"></i> Analiz Ayarları
+                                    <i class="bi bi-gear"></i> Analysis Settings
                                 </h5>
                                 
-                                <!-- Frame Çıkarma -->
+                                <!-- Frame Extraction -->
                                 <div class="mb-3">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" 
@@ -58,15 +58,15 @@
                                                id="extractInterval" 
                                                checked>
                                         <label class="form-check-label" for="extractInterval">
-                                            Düzenli aralıklarla frame çıkar
+                                            Extract frames at regular intervals
                                         </label>
                                     </div>
                                 </div>
 
-                                <!-- Aralık -->
+                                <!-- Interval -->
                                 <div class="mb-3" id="intervalSettings">
                                     <label for="intervalSeconds" class="form-label">
-                                        Frame çıkarma aralığı (saniye)
+                                        Frame extraction interval (seconds)
                                     </label>
                                     <input type="range" 
                                            class="form-range" 
@@ -86,7 +86,7 @@
                         <!-- Submit Button -->
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                                <i class="bi bi-play-fill"></i> Analizi Başlat
+                                <i class="bi bi-play-fill"></i> Start Analysis
                             </button>
                         </div>
                     </form>
@@ -101,7 +101,7 @@
             <div class="card shadow">
                 <div class="card-body">
                     <h5 class="card-title mb-3">
-                        <i class="bi bi-hourglass-split"></i> Analiz İlerlemesi
+                        <i class="bi bi-hourglass-split"></i> Analysis Progress
                     </h5>
                     
                     <div class="progress mb-3" style="height: 30px;">
@@ -114,18 +114,18 @@
                     </div>
                     
                     <div class="alert alert-info" id="progressMessage">
-                        <i class="bi bi-info-circle"></i> Hazırlanıyor...
+                        <i class="bi bi-info-circle"></i> Preparing...
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Özellikler -->
+    <!-- Features -->
     <div class="row mt-5 mb-5">
         <div class="col-lg-10 mx-auto">
             <h3 class="text-center mb-4">
-                <i class="bi bi-stars"></i> Özellikler
+                <i class="bi bi-stars"></i> Features
             </h3>
             <div class="row g-4">
                 <div class="col-md-4">
@@ -134,9 +134,9 @@
                             <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
                                 <i class="bi bi-file-text fs-3"></i>
                             </div>
-                            <h5 class="card-title">Transkript Çıkarma</h5>
+                            <h5 class="card-title">Transcript Extraction</h5>
                             <p class="card-text text-muted">
-                                Video transkriptini otomatik olarak çıkarır ve zaman damgalarıyla kaydeder
+                                Automatically extracts video transcript and saves with timestamps
                             </p>
                         </div>
                     </div>
@@ -147,9 +147,9 @@
                             <div class="feature-icon bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
                                 <i class="bi bi-images fs-3"></i>
                             </div>
-                            <h5 class="card-title">Frame Galerisi</h5>
+                            <h5 class="card-title">Frame Gallery</h5>
                             <p class="card-text text-muted">
-                                Cümle bitimlerinde ve düzenli aralıklarla frame'leri otomatik çıkarır
+                                Automatically extracts frames at sentence endings and regular intervals
                             </p>
                         </div>
                     </div>
@@ -160,9 +160,9 @@
                             <div class="feature-icon bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
                                 <i class="bi bi-search fs-3"></i>
                             </div>
-                            <h5 class="card-title">Akıllı Arama</h5>
+                            <h5 class="card-title">Smart Search</h5>
                             <p class="card-text text-muted">
-                                Transkript içinde arama yapın ve zaman damgalarını görüntüleyin
+                                Search within transcript and view timestamps
                             </p>
                         </div>
                     </div>
@@ -179,7 +179,7 @@ $(document).ready(function() {
     let currentAnalysisId = null;
     let statusCheckInterval = null;
 
-    // Interval slider güncelleme
+    // Update interval slider
     $('#intervalSeconds').on('input', function() {
         $('#intervalValue').text($(this).val());
     });
@@ -202,16 +202,16 @@ $(document).ready(function() {
         const intervalSeconds = parseInt($('#intervalSeconds').val());
 
         if (!url) {
-            alert('Lütfen bir YouTube URL\'si girin!');
+            alert('Please enter a YouTube URL!');
             return;
         }
 
-        // Butonu devre dışı bırak
+        // Disable button
         $('#submitBtn').prop('disabled', true).html(
-            '<span class="spinner-border spinner-border-sm me-2"></span>Başlatılıyor...'
+            '<span class="spinner-border spinner-border-sm me-2"></span>Starting...'
         );
 
-        // Analizi başlat
+        // Start analysis
         $.ajax({
             url: '/analyze',
             method: 'POST',
@@ -225,13 +225,13 @@ $(document).ready(function() {
                 currentAnalysisId = response.analysis_id;
                 $('#progressSection').slideDown();
                 
-                // İlerleme kontrolünü başlat
+                // Start progress check
                 statusCheckInterval = setInterval(checkStatus, 1000);
             },
             error: function(xhr) {
-                alert('Hata: ' + (xhr.responseJSON?.error || 'Bilinmeyen hata'));
+                alert('Error: ' + (xhr.responseJSON?.error || 'Unknown error'));
                 $('#submitBtn').prop('disabled', false).html(
-                    '<i class="bi bi-play-fill"></i> Analizi Başlat'
+                    '<i class="bi bi-play-fill"></i> Start Analysis'
                 );
             }
         });
@@ -244,14 +244,14 @@ $(document).ready(function() {
             url: '/status/' + currentAnalysisId,
             method: 'GET',
             success: function(data) {
-                // İlerleme güncelle
+                // Update progress
                 const progress = data.progress || 0;
                 $('#progressBar').css('width', progress + '%').text(progress + '%');
                 $('#progressMessage').html(
                     '<i class="bi bi-info-circle"></i> ' + data.message
                 );
 
-                // Durum kontrolü
+                // Status check
                 if (data.status === 'completed') {
                     clearInterval(statusCheckInterval);
                     
@@ -259,9 +259,9 @@ $(document).ready(function() {
                                     .addClass('bg-success');
                     $('#progressMessage').removeClass('alert-info')
                                         .addClass('alert-success')
-                                        .html('<i class="bi bi-check-circle"></i> Analiz tamamlandı! Yönlendiriliyorsunuz...');
+                                        .html('<i class="bi bi-check-circle"></i> Analysis completed! Redirecting...');
                     
-                    // Sonuç sayfasına yönlendir
+                    // Redirect to results page
                     setTimeout(function() {
                         window.location.href = '/results/' + currentAnalysisId;
                     }, 1500);
@@ -272,16 +272,16 @@ $(document).ready(function() {
                                     .addClass('bg-danger');
                     $('#progressMessage').removeClass('alert-info')
                                         .addClass('alert-danger')
-                                        .html('<i class="bi bi-x-circle"></i> Hata: ' + data.message);
+                                        .html('<i class="bi bi-x-circle"></i> Error: ' + data.message);
                     
                     $('#submitBtn').prop('disabled', false).html(
-                        '<i class="bi bi-play-fill"></i> Analizi Başlat'
+                        '<i class="bi bi-play-fill"></i> Start Analysis'
                     );
                 }
             },
             error: function() {
                 clearInterval(statusCheckInterval);
-                alert('Durum kontrolü hatası!');
+                alert('Status check error!');
             }
         });
     }

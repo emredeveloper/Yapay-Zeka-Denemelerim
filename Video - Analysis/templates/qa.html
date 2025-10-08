@@ -1,41 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Video Q&A - AI Asistan{% endblock %}
+{% block title %}Video Q&A - AI Assistant{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- Başlık -->
+    <!-- Title -->
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="mb-3">
-                <i class="bi bi-robot"></i> Video Q&A - AI Asistan
+                <i class="bi bi-robot"></i> Video Q&A - AI Assistant
             </h1>
-            <p class="lead">Video hakkında istediğiniz soruyu sorun, AI size yardımcı olsun!</p>
+            <p class="lead">Ask any question about the video, AI will help you!</p>
             
             <div class="d-flex gap-2 mb-3">
                 <a href="/results/{{ analysis_id }}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Geri Dön
+                    <i class="bi bi-arrow-left"></i> Back
                 </a>
                 <a href="/transcript/{{ analysis_id }}" class="btn btn-info">
-                    <i class="bi bi-file-text"></i> Transkript
+                    <i class="bi bi-file-text"></i> Transcript
                 </a>
                 <a href="/gallery/{{ analysis_id }}" class="btn btn-success">
-                    <i class="bi bi-images"></i> Galeri
+                    <i class="bi bi-images"></i> Gallery
                 </a>
             </div>
             
             {% if not ollama_available %}
             <div class="alert alert-warning" role="alert">
                 <i class="bi bi-exclamation-triangle"></i>
-                <strong>Uyarı:</strong> Ollama bağlantısı yok! AI özellikleri çalışmayacak.
+                <strong>Warning:</strong> Ollama connection unavailable! AI features will not work.
                 <br>
-                <small>Ollama'yı başlatın: <code>ollama serve</code></small>
+                <small>Start Ollama: <code>ollama serve</code></small>
             </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Video Player - Tam Genişlik -->
+    <!-- Video Player - Full Width -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm">
@@ -54,7 +54,7 @@
                         </iframe>
                     </div>
                     <small class="text-muted d-block mt-2">
-                        <i class="bi bi-info-circle"></i> Arama sonuçlarına tıklayınca video otomatik olarak o andan başlar
+                        <i class="bi bi-info-circle"></i> Click on search results to automatically start video from that moment
                     </small>
                 </div>
             </div>
@@ -66,13 +66,13 @@
         <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <i class="bi bi-chat-dots"></i> Sohbet
+                    <i class="bi bi-chat-dots"></i> Chat
                 </div>
                 <div class="card-body" id="chatContainer" style="height: 500px; overflow-y: auto;">
-                    <!-- Mesajlar buraya eklenecek -->
+                    <!-- Messages will be added here -->
                     <div class="text-center text-muted py-5">
                         <i class="bi bi-chat-square-text" style="font-size: 3rem;"></i>
-                        <p class="mt-3">Video hakkında bir soru sorun!</p>
+                        <p class="mt-3">Ask a question about the video!</p>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -81,13 +81,13 @@
                             <input type="text" 
                                    class="form-control" 
                                    id="questionInput" 
-                                   placeholder="Sorunuzu yazın..."
+                                   placeholder="Type your question..."
                                    {% if not ollama_available %}disabled{% endif %}>
                             <button class="btn btn-primary" 
                                     type="submit" 
                                     id="askButton"
                                     {% if not ollama_available %}disabled{% endif %}>
-                                <i class="bi bi-send"></i> Sor
+                                <i class="bi bi-send"></i> Ask
                             </button>
                         </div>
                     </form>
@@ -95,48 +95,48 @@
             </div>
         </div>
 
-        <!-- Sağ Sidebar - Hızlı Sorular -->
+        <!-- Sağ Sidebar - Hızlı Questionlar -->
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-info text-white">
-                    <i class="bi bi-lightning"></i> Hızlı Sorular
+                    <i class="bi bi-lightning"></i> Quick Questions
                 </div>
                 <div class="card-body">
-                    <p class="text-muted small mb-3">Bu soruları tıklayarak hızlıca sorabilirsiniz:</p>
+                    <p class="text-muted small mb-3">Click these questions to ask quickly:</p>
                     <div class="d-grid gap-2">
                         <button class="btn btn-outline-primary btn-sm quick-question" 
-                                data-question="Video ne hakkında?"
+                                data-question="What is this video about?"
                                 {% if not ollama_available %}disabled{% endif %}>
-                            Video ne hakkında?
+                            What is this video about?
                         </button>
                         <button class="btn btn-outline-primary btn-sm quick-question" 
-                                data-question="Ana konular neler?"
+                                data-question="What are the main topics?"
                                 {% if not ollama_available %}disabled{% endif %}>
-                            Ana konular neler?
+                            What are the main topics?
                         </button>
                         <button class="btn btn-outline-primary btn-sm quick-question" 
-                                data-question="Önemli noktaları özetle"
+                                data-question="Summarize the key points"
                                 {% if not ollama_available %}disabled{% endif %}>
-                            Önemli noktaları özetle
+                            Summarize the key points
                         </button>
                         <button class="btn btn-outline-primary btn-sm quick-question" 
-                                data-question="Hangi zaman diliminde hangi konular işleniyor?"
+                                data-question="What topics are covered in which time periods?"
                                 {% if not ollama_available %}disabled{% endif %}>
-                            Zaman çizelgesi
+                            Timeline
                         </button>
                         <button class="btn btn-outline-primary btn-sm quick-question" 
-                                data-question="Video'dan çıkarılacak dersler neler?"
+                                data-question="What lessons can be learned from this video?"
                                 {% if not ollama_available %}disabled{% endif %}>
-                            Çıkarılacak dersler
+                            Lessons to Learn
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Gelişmiş Arama -->
+            <!-- Advanced Search -->
             <div class="card shadow-sm mt-3">
                 <div class="card-header bg-success text-white">
-                    <i class="bi bi-search"></i> Akıllı Arama
+                    <i class="bi bi-search"></i> Smart Search
                 </div>
                 <div class="card-body">
                     <form id="smartSearchForm">
@@ -144,28 +144,28 @@
                             <input type="text" 
                                    class="form-control" 
                                    id="searchQuery" 
-                                   placeholder="Arama yapın..."
+                                   placeholder="Search..."
                                    {% if not ollama_available %}disabled{% endif %}>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Arama Türü:</label>
+                            <label class="form-label">Search Type:</label>
                             <select class="form-select" id="searchType" {% if not ollama_available %}disabled{% endif %}>
-                                <option value="both">Hem Metin Hem Görsel</option>
-                                <option value="text">Sadece Metin</option>
-                                <option value="visual">Sadece Görsel</option>
+                                <option value="both">Both Text and Visual</option>
+                                <option value="text">Text Only</option>
+                                <option value="visual">Visual Only</option>
                             </select>
                         </div>
                         <button type="submit" 
                                 class="btn btn-success w-100"
                                 {% if not ollama_available %}disabled{% endif %}>
-                            <i class="bi bi-search"></i> Ara
+                            <i class="bi bi-search"></i> Search
                         </button>
                     </form>
                     
-                    <!-- Arama Sonuçları -->
+                    <!-- Search Results -->
                     <div id="searchResults" class="mt-3" style="display: none;">
                         <hr>
-                        <h6>Sonuçlar:</h6>
+                        <h6>Results:</h6>
                         <div id="searchResultsContent"></div>
                     </div>
                 </div>
@@ -174,13 +174,13 @@
     </div>
 </div>
 
-<!-- Frame Analiz Modal -->
+<!-- Frame Analysis Modal -->
 <div class="modal fade" id="frameAnalysisModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="bi bi-image"></i> Görsel Analizi
+                    <i class="bi bi-image"></i> Visual Analysis
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -188,7 +188,7 @@
                 <img id="modalFrameImage" src="" class="img-fluid mb-3" alt="Frame">
                 <div id="modalFrameAnalysis" class="alert alert-info">
                     <div class="spinner-border spinner-border-sm" role="status"></div>
-                    Analiz ediliyor...
+                    Analyzing...
                 </div>
             </div>
         </div>
@@ -202,13 +202,13 @@ const questionForm = document.getElementById('questionForm');
 const questionInput = document.getElementById('questionInput');
 const askButton = document.getElementById('askButton');
 
-// Mesaj ekleme
+// Add message
 function addMessage(content, isUser = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `mb-3 ${isUser ? 'text-end' : 'text-start'}`;
     
     const badge = isUser 
-        ? '<span class="badge bg-primary mb-1"><i class="bi bi-person"></i> Siz</span>'
+        ? '<span class="badge bg-primary mb-1"><i class="bi bi-person"></i> You</span>'
         : '<span class="badge bg-success mb-1"><i class="bi bi-robot"></i> AI</span>';
     
     messageDiv.innerHTML = `
@@ -220,7 +220,7 @@ function addMessage(content, isUser = false) {
         </div>
     `;
     
-    // İlk mesajsa empty state'i kaldır
+    // Remove empty state if it's the first message
     const emptyState = chatContainer.querySelector('.text-center.text-muted');
     if (emptyState) {
         emptyState.remove();
@@ -230,22 +230,22 @@ function addMessage(content, isUser = false) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Soru sorma
+// Ask question
 questionForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const question = questionInput.value.trim();
     if (!question) return;
     
-    // Kullanıcı mesajını ekle
+    // Add user message
     addMessage(question, true);
     questionInput.value = '';
     
-    // Loading mesajı
+    // Loading message
     const loadingId = 'loading_' + Date.now();
-    addMessage(`<div id="${loadingId}"><div class="spinner-border spinner-border-sm" role="status"></div> Düşünüyorum...</div>`, false);
+    addMessage(`<div id="${loadingId}"><div class="spinner-border spinner-border-sm" role="status"></div> Thinking...</div>`, false);
     
-    // Butonu devre dışı bırak
+    // Disable button
     askButton.disabled = true;
     
     try {
@@ -257,24 +257,24 @@ questionForm.addEventListener('submit', async (e) => {
         
         const data = await response.json();
         
-        // Loading mesajını kaldır
+        // Remove loading message
         document.getElementById(loadingId).parentElement.parentElement.remove();
         
         if (response.ok) {
             addMessage(data.answer, false);
         } else {
-            addMessage(`❌ Hata: ${data.error}`, false);
+            addMessage(`❌ Error: ${data.error}`, false);
         }
     } catch (error) {
         document.getElementById(loadingId).parentElement.parentElement.remove();
-        addMessage(`❌ Bağlantı hatası: ${error.message}`, false);
+        addMessage(`❌ Connection error: ${error.message}`, false);
     } finally {
         askButton.disabled = false;
         questionInput.focus();
     }
 });
 
-// Hızlı sorular
+// Quick questions
 document.querySelectorAll('.quick-question').forEach(btn => {
     btn.addEventListener('click', () => {
         questionInput.value = btn.dataset.question;
@@ -282,7 +282,7 @@ document.querySelectorAll('.quick-question').forEach(btn => {
     });
 });
 
-// Akıllı arama
+// Smart search
 document.getElementById('smartSearchForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -295,7 +295,7 @@ document.getElementById('smartSearchForm').addEventListener('submit', async (e) 
     const resultsContent = document.getElementById('searchResultsContent');
     
     resultsDiv.style.display = 'block';
-    resultsContent.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Aranıyor...';
+    resultsContent.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Searching...';
     
     try {
         const response = await fetch(`/api/smart-search/${analysisId}`, {
@@ -309,12 +309,12 @@ document.getElementById('smartSearchForm').addEventListener('submit', async (e) 
         if (response.ok) {
             let html = '';
             
-            // Metin sonuçları
+            // Text results
             if (data.text_results && data.text_results.length > 0) {
-                html += `<p><strong>📝 Metin Sonuçları (${data.total_text}):</strong></p>`;
+                html += `<p><strong>📝 Text Results (${data.total_text}):</strong></p>`;
                 html += '<div class="list-group mb-2">';
                 data.text_results.slice(0, 5).forEach(r => {
-                    // Frame ismi oluştur (tahmin)
+                    // Create frame name (estimate)
                     const timeMatch = r.time_formatted.match(/(\d+):(\d+)/);
                     const frameName = timeMatch ? `sentence_time_${timeMatch[1]}m${timeMatch[2]}s.jpg` : '';
                     
@@ -322,7 +322,7 @@ document.getElementById('smartSearchForm').addEventListener('submit', async (e) 
                         <div class="list-group-item list-group-item-action" 
                              style="cursor: pointer;"
                              onclick="playVideoFromTime(${r.start})"
-                             title="Videoyu bu andan başlat">
+                             title="Start video from this moment">
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
                                     <i class="bi bi-clock"></i> ${r.time_formatted}
@@ -338,12 +338,12 @@ document.getElementById('smartSearchForm').addEventListener('submit', async (e) 
                 html += '</div>';
             }
             
-            // Görsel sonuçları
+            // Visual results
             if (data.visual_results && data.visual_results.length > 0) {
-                html += `<p><strong>🖼️ Görsel Sonuçları (${data.total_visual}):</strong></p>`;
+                html += `<p><strong>🖼️ Visual Results (${data.total_visual}):</strong></p>`;
                 html += '<div class="row g-2">';
                 data.visual_results.forEach(r => {
-                    // Zaman bilgisini frame isminden çıkar
+                    // Extract time information from frame name
                     const timeMatch = r.frame.match(/time_(\d+)m(\d+)s/);
                     const timeStr = timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : '';
                     
@@ -354,7 +354,7 @@ document.getElementById('smartSearchForm').addEventListener('submit', async (e) 
                                      class="img-fluid rounded border border-2 border-primary" 
                                      style="cursor: pointer; height: 120px; width: 100%; object-fit: cover;"
                                      onclick="playVideoAtFrame('${r.frame}')"
-                                     title="Videoyu ${timeStr} anından başlat">
+                                     title="Start video from ${timeStr}">
                                 <div class="position-absolute top-0 end-0 m-1">
                                     <span class="badge bg-danger">
                                         <i class="bi bi-play-fill"></i> ${timeStr}
@@ -368,19 +368,19 @@ document.getElementById('smartSearchForm').addEventListener('submit', async (e) 
             }
             
             if (html === '') {
-                html = '<p class="text-muted">Sonuç bulunamadı.</p>';
+                html = '<p class="text-muted">No results found.</p>';
             }
             
             resultsContent.innerHTML = html;
         } else {
-            resultsContent.innerHTML = `<p class="text-danger">Hata: ${data.error}</p>`;
+            resultsContent.innerHTML = `<p class="text-danger">Error: ${data.error}</p>`;
         }
     } catch (error) {
-        resultsContent.innerHTML = `<p class="text-danger">Bağlantı hatası: ${error.message}</p>`;
+        resultsContent.innerHTML = `<p class="text-danger">Connection error: ${error.message}</p>`;
     }
 });
 
-// Frame analizi göster
+// Show frame analysis
 function showFrameAnalysis(frameName, analysis) {
     const modal = new bootstrap.Modal(document.getElementById('frameAnalysisModal'));
     document.getElementById('modalFrameImage').src = `/static/results/${analysisId.split('_')[0]}_*/images/${frameName}`;
@@ -388,9 +388,9 @@ function showFrameAnalysis(frameName, analysis) {
     modal.show();
 }
 
-// Frame isimden timestamp çıkar ve videoyu oynat
+// Extract timestamp from frame name and play video
 function playVideoAtFrame(frameName) {
-    // Frame ismi formatı: sentence_0001_time_00m44s.jpg
+    // Frame name format: sentence_0001_time_00m44s.jpg
     const match = frameName.match(/time_(\d+)m(\d+)s/);
     if (match) {
         const minutes = parseInt(match[1]);
@@ -400,25 +400,25 @@ function playVideoAtFrame(frameName) {
     }
 }
 
-// Videoyu belirtilen saniyeden başlat
+// Start video from specified seconds
 function playVideoFromTime(seconds) {
     const iframe = document.getElementById('videoPlayer');
     const videoId = '{{ result.video_id }}';
     iframe.src = `https://www.youtube.com/embed/${videoId}?start=${Math.floor(seconds)}&autoplay=1&enablejsapi=1&rel=0`;
     
-    // Sayfayı yukarı kaydır (video görünsün)
+    // Scroll page up (make video visible)
     document.querySelector('.row.mb-4').scrollIntoView({ behavior: 'smooth', block: 'start' });
     
-    // Zaman formatı
+    // Time format
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     const timeStr = `${minutes}:${secs.toString().padStart(2, '0')}`;
     
-    // Bildirim göster
-    showToast(`Video ${timeStr} anından başlatılıyor...`);
+    // Show notification
+    showToast(`Starting video from ${timeStr}...`);
 }
 
-// Toast bildirimi
+// Toast notification
 function showToast(message) {
     const toastDiv = document.createElement('div');
     toastDiv.className = 'position-fixed bottom-0 end-0 p-3';
