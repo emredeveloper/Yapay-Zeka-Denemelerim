@@ -1,7 +1,7 @@
 """
 Flask Web Arayüzü - YouTube Video Analiz Uygulaması
 """
-from flask import Flask, render_template, request, jsonify, send_from_directory, session
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, Response
 from werkzeug.utils import secure_filename
 import os
 import json
@@ -12,6 +12,8 @@ import uuid
 
 # YouTube analyzer'ı import et
 from youtube_app import YouTubeVideoAnalyzer
+# Ollama client'ı import et
+from ollama_client import OllamaClient
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -20,6 +22,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 # Global analiz durumu takibi
 analysis_status = {}
 analysis_lock = threading.Lock()
+
+# Ollama client
+ollama = OllamaClient()
 
 
 @app.route('/')
@@ -135,7 +140,8 @@ def run_analysis(analysis_id, url, extract_interval, interval_seconds):
             'sentence_count': len(sentences) if sentences else 0,
             'sentence_frames': sentence_frames[:50],  # İlk 50 frame
             'interval_frames': interval_frames[:50],
-            'transcript_data': transcript_with_time if transcript_with_time else []
+            'transcript_data': transcript_with_time if transcript_with_time else [],
+            'full_text': full_text if full_text else ''  # Tam transkript metni
         }
         
         # Tamamlandı
@@ -325,6 +331,279 @@ def download_file(filepath):
         return f"İndirme hatası: {str(e)}", 500
 
 
+# ============================================================
+# OLLAMA & AI ÖZELLİKLERİ
+# ============================================================
+
+@app.route('/qa/<analysis_id>')
+def qa_page(analysis_id):
+    """Video Q&A sayfası"""
+    with analysis_lock:
+        if analysis_id not in analysis_status:
+            return "Analiz bulunamadı", 404
+        
+        status_data = analysis_status[analysis_id]
+        if status_data['status'] != 'completed':
+            return "Analiz henüz tamamlanmadı", 400
+        
+        result = status_data['result']
+    
+    # Ollama durumunu kontrol et
+    ollama_available = ollama.check_connection()
+    
+    return render_template('qa.html',
+                         analysis_id=analysis_id,
+                         result=result,
+                         ollama_available=ollama_available)
+
+
+@app.route('/api/ask/<analysis_id>', methods=['POST'])
+def ask_question(analysis_id):
+    """Video hakkında soru sor"""
+    with analysis_lock:
+        if analysis_id not in analysis_status:
+            return jsonify({'error': 'Analiz bulunamadı'}), 404
+        
+        status_data = analysis_status[analysis_id]
+        if status_data['status'] != 'completed':
+            return jsonify({'error': 'Analiz henüz tamamlanmadı'}), 400
+        
+        result = status_data['result']
+    
+    data = request.get_json()
+    question = data.get('question', '').strip()
+    
+    if not question:
+        return jsonify({'error': 'Soru boş olamaz'}), 400
+    
+    # Ollama kontrolü
+    if not ollama.check_connection():
+        return jsonify({'error': 'Ollama bağlantısı yok. Ollama çalışıyor mu?'}), 503
+    
+    try:
+        # Transcript'i hazırla
+        transcript_text = result.get('full_text', '')
+        
+        # Video bilgilerini hazırla
+        video_info_data = result.get('video_info', {})
+        video_info = {
+            'title': video_info_data.get('title', 'N/A'),
+            'channel': video_info_data.get('channel', 'N/A'),
+            'duration': video_info_data.get('duration_formatted', 'N/A'),
+            'views': video_info_data.get('views', 'N/A')
+        }
+        
+        # İlgili frame'leri bul (opsiyonel - performans için devre dışı)
+        relevant_frames = []
+        use_frames = data.get('use_frames', False)  # Frontend'den gelen parametre
+        
+        if use_frames and 'sentence_frames' in result:
+            # Sadece ilk 2 frame'i al (hız için)
+            for frame_info in result['sentence_frames'][:2]:
+                # frame_info bir dict, filename key'i var
+                if isinstance(frame_info, dict):
+                    frame_filename = frame_info.get('filename', '')
+                else:
+                    # Eğer string ise direk kullan
+                    frame_filename = frame_info
+                
+                if frame_filename:
+                    frame_path = os.path.join('static', result['images_dir'], frame_filename)
+                    if os.path.exists(frame_path):
+                        relevant_frames.append(frame_path)
+        
+        # Soruyu yanıtla
+        answer = ollama.answer_question_with_context(
+            question=question,
+            transcript=transcript_text,
+            video_info=video_info,
+            relevant_frames=relevant_frames if use_frames else None
+        )
+        
+        return jsonify({
+            'question': question,
+            'answer': answer,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Hata: {str(e)}'}), 500
+
+
+@app.route('/api/analyze-frame/<analysis_id>/<frame_name>', methods=['POST'])
+def analyze_frame(analysis_id, frame_name):
+    """Bir frame'i görsel olarak analiz et"""
+    with analysis_lock:
+        if analysis_id not in analysis_status:
+            return jsonify({'error': 'Analiz bulunamadı'}), 404
+        
+        status_data = analysis_status[analysis_id]
+        if status_data['status'] != 'completed':
+            return jsonify({'error': 'Analiz henüz tamamlanmadı'}), 400
+        
+        result = status_data['result']
+    
+    # Frame dosyasını bul
+    frame_path = os.path.join('static', result['images_dir'], frame_name)
+    
+    if not os.path.exists(frame_path):
+        return jsonify({'error': 'Frame bulunamadı'}), 404
+    
+    # Ollama kontrolü
+    if not ollama.check_connection():
+        return jsonify({'error': 'Ollama bağlantısı yok'}), 503
+    
+    try:
+        # İsteğe göre özel soru
+        data = request.get_json() or {}
+        custom_question = data.get('question', '')
+        
+        if custom_question:
+            question = custom_question
+        else:
+            question = "Bu görselde ne görüyorsun? Detaylı bir şekilde açıkla."
+        
+        # Görseli analiz et
+        analysis = ollama.analyze_image(frame_path, question)
+        
+        return jsonify({
+            'frame': frame_name,
+            'question': question,
+            'analysis': analysis,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Hata: {str(e)}'}), 500
+
+
+@app.route('/api/smart-search/<analysis_id>', methods=['POST'])
+def smart_search(analysis_id):
+    """Gelişmiş arama - hem metin hem görsel"""
+    with analysis_lock:
+        if analysis_id not in analysis_status:
+            return jsonify({'error': 'Analiz bulunamadı'}), 404
+        
+        status_data = analysis_status[analysis_id]
+        if status_data['status'] != 'completed':
+            return jsonify({'error': 'Analiz henüz tamamlanmadı'}), 400
+        
+        result = status_data['result']
+    
+    data = request.get_json()
+    query = data.get('query', '').strip()
+    search_type = data.get('type', 'both')  # 'text', 'visual', 'both'
+    
+    if not query:
+        return jsonify({'error': 'Arama sorgusu boş'}), 400
+    
+    results = {
+        'query': query,
+        'text_results': [],
+        'visual_results': []
+    }
+    
+    try:
+        # Metin araması
+        if search_type in ['text', 'both']:
+            transcript_data = result.get('transcript_data', [])
+            
+            # Basit text matching
+            for i, entry in enumerate(transcript_data):
+                if query.lower() in entry['text'].lower():
+                    results['text_results'].append({
+                        'index': i,
+                        'text': entry['text'],
+                        'start': entry['start'],
+                        'time_formatted': f"{int(entry['start'] // 60):02d}:{int(entry['start'] % 60):02d}"
+                    })
+                    
+                    if len(results['text_results']) >= 10:
+                        break
+        
+        # Görsel arama (AKILLI YAKLAŞIM)
+        if search_type in ['visual', 'both'] and ollama.check_connection():
+            frames_dir = Path('static') / result['images_dir']
+            
+            if frames_dir.exists():
+                # YÖNTEM 1: Eğer metin araması varsa, sadece o zamanların frame'lerini analiz et
+                if search_type == 'both' and len(results['text_results']) > 0:
+                    # Metin bulunduğu zamanların frame'lerini al
+                    for text_result in results['text_results'][:5]:  # İlk 5 sonuç
+                        timestamp = text_result['start']
+                        minutes = int(timestamp // 60)
+                        seconds = int(timestamp % 60)
+                        
+                        # Bu zamana yakın frame'i bul
+                        frame_pattern = f"*_time_{minutes:02d}m{seconds:02d}s.jpg"
+                        matching_frames = list(frames_dir.glob(frame_pattern))
+                        
+                        if not matching_frames:
+                            # ±5 saniye aralığında ara
+                            for offset in range(-5, 6):
+                                adj_time = timestamp + offset
+                                adj_min = int(adj_time // 60)
+                                adj_sec = int(adj_time % 60)
+                                pattern = f"*_time_{adj_min:02d}m{adj_sec:02d}s.jpg"
+                                matching_frames = list(frames_dir.glob(pattern))
+                                if matching_frames:
+                                    break
+                        
+                        if matching_frames:
+                            frame_file = matching_frames[0]
+                            try:
+                                search_question = f"Bu görselde '{query}' ile alakalı bir şey var mı? Evet/Hayır + kısa açıklama."
+                                analysis = ollama.analyze_image(str(frame_file), search_question)
+                                
+                                results['visual_results'].append({
+                                    'frame': frame_file.name,
+                                    'path': str(Path(result['images_dir']) / frame_file.name),
+                                    'analysis': analysis,
+                                    'related_text': text_result['text']
+                                })
+                            except:
+                                continue
+                
+                else:
+                    # YÖNTEM 2: Sadece görsel arama - rastgele 10 frame seç (20 yerine)
+                    all_frames = list(frames_dir.glob('*.jpg'))
+                    
+                    # Rastgele değil, düzenli aralıklarla seç (daha iyi coverage)
+                    if len(all_frames) > 10:
+                        step = len(all_frames) // 10
+                        selected_frames = all_frames[::step][:10]
+                    else:
+                        selected_frames = all_frames[:10]
+                    
+                    search_question = f"Bu görselde '{query}' var mı? Sadece Evet/Hayır + çok kısa açıklama (max 10 kelime)."
+                    
+                    for frame_file in selected_frames:
+                        try:
+                            analysis = ollama.analyze_image(str(frame_file), search_question)
+                            
+                            # Eğer "evet" içeriyorsa alakalı
+                            if 'evet' in analysis.lower() or 'yes' in analysis.lower():
+                                results['visual_results'].append({
+                                    'frame': frame_file.name,
+                                    'path': str(Path(result['images_dir']) / frame_file.name),
+                                    'analysis': analysis
+                                })
+                                
+                                if len(results['visual_results']) >= 5:
+                                    break
+                                    
+                        except:
+                            continue
+        
+        results['total_text'] = len(results['text_results'])
+        results['total_visual'] = len(results['visual_results'])
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        return jsonify({'error': f'Hata: {str(e)}'}), 500
+
+
 # Hata handler'ları
 @app.errorhandler(404)
 def not_found(e):
@@ -339,6 +618,16 @@ def server_error(e):
 if __name__ == '__main__':
     # Static/results klasörünü oluştur
     os.makedirs('static/results', exist_ok=True)
+    
+    # Ollama kontrolü
+    print("\n🔍 Ollama Kontrolü...")
+    if ollama.check_connection():
+        print("✅ Ollama bağlantısı başarılı!")
+        models = ollama.list_models()
+        print(f"📦 Yüklü modeller: {', '.join(models[:3])}...")
+    else:
+        print("⚠️  Ollama bağlantısı yok! AI özellikleri çalışmayacak.")
+        print("   Ollama'yı başlatın: ollama serve")
     
     print("\n" + "="*70)
     print("🎬 YOUTUBE VİDEO ANALİZ WEB UYGULAMASI")
