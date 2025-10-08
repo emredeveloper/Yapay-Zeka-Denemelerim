@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Analiz Sonuçları - {{ result.video_info.Başlık }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <!-- Video Info Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <img src="{{ result.video_info['Thumbnail URL'] }}" 
+                                 class="img-fluid rounded" 
+                                 alt="Video Thumbnail">
+                        </div>
+                        <div class="col-md-9">
+                            <h2 class="card-title mb-3">{{ result.video_info.Başlık }}</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <i class="bi bi-person-circle"></i> 
+                                        <strong>Kanal:</strong> {{ result.video_info.Kanal }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="bi bi-eye"></i> 
+                                        <strong>Görüntülenme:</strong> {{ "{:,}".format(result.video_info.Görüntülenme) }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <i class="bi bi-clock"></i> 
+                                        <strong>Süre:</strong> {{ result.video_info['Süre (dk:sn)'] }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="bi bi-calendar"></i> 
+                                        <strong>Yayın:</strong> {{ result.video_info['Yayın Tarihi'] }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-file-text text-primary fs-1"></i>
+                    <h3 class="mt-2">{{ "{:,}".format(result.transcript_length) }}</h3>
+                    <p class="text-muted mb-0">Karakter</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-chat-dots text-success fs-1"></i>
+                    <h3 class="mt-2">{{ result.sentence_count }}</h3>
+                    <p class="text-muted mb-0">Cümle</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-image text-info fs-1"></i>
+                    <h3 class="mt-2">{{ result.sentence_frames_count }}</h3>
+                    <p class="text-muted mb-0">Cümle Frame</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-images text-warning fs-1"></i>
+                    <h3 class="mt-2">{{ result.interval_frames_count }}</h3>
+                    <p class="text-muted mb-0">Düzenli Frame</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs nav-fill mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview">
+                <i class="bi bi-info-circle"></i> Genel Bakış
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#transcript">
+                <i class="bi bi-file-text"></i> Transkript
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#gallery">
+                <i class="bi bi-images"></i> Galeri
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">
+                        <i class="bi bi-bar-chart"></i> Analiz Özeti
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Video Bilgileri</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Video ID:</strong></td>
+                                    <td>{{ result.video_id }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Transkript:</strong></td>
+                                    <td>
+                                        {% if result.has_transcript %}
+                                            <span class="badge bg-success">Var</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Yok</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Video Dosyası:</strong></td>
+                                    <td>
+                                        {% if result.has_video %}
+                                            <span class="badge bg-success">İndirildi</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">İndirilemedi</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Hızlı Erişim</h5>
+                            <div class="d-grid gap-2">
+                                <a href="/gallery/{{ analysis_id }}" class="btn btn-primary">
+                                    <i class="bi bi-images"></i> Tam Galeriyi Görüntüle
+                                </a>
+                                <a href="/transcript/{{ analysis_id }}" class="btn btn-success">
+                                    <i class="bi bi-search"></i> Transkriptte Ara
+                                </a>
+                                <a href="/download/{{ result.project_dir }}/SUMMARY_REPORT.txt" class="btn btn-info">
+                                    <i class="bi bi-download"></i> Özet Raporu İndir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if result.sentence_frames|length > 0 %}
+                    <hr class="my-4">
+                    <h5>İlk Frame Örnekleri</h5>
+                    <div class="row g-3">
+                        {% for frame in result.sentence_frames[:6] %}
+                        <div class="col-md-4">
+                            <div class="card">
+                                <img src="/static/{{ result.images_dir }}/{{ frame.filename }}" 
+                                     class="card-img-top" 
+                                     alt="Frame">
+                                <div class="card-body p-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> {{ frame.time_formatted }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Transcript Tab -->
+        <div class="tab-pane fade" id="transcript" role="tabpanel">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="searchInput" 
+                                   placeholder="Transkript içinde ara...">
+                            <button class="btn btn-primary" id="searchBtn">Ara</button>
+                        </div>
+                        <small class="text-muted">
+                            Toplam {{ result.transcript_data|length }} segment
+                        </small>
+                    </div>
+
+                    <div id="transcriptContent" style="max-height: 600px; overflow-y: auto;">
+                        {% for entry in result.transcript_data[:50] %}
+                        <div class="transcript-entry mb-2 p-2 border-bottom" data-start="{{ entry.start }}">
+                            <span class="badge bg-secondary me-2">
+                                {{ "%02d:%02d" | format(entry.start // 60, entry.start % 60) }}
+                            </span>
+                            <span class="transcript-text">{{ entry.text }}</span>
+                        </div>
+                        {% endfor %}
+                        {% if result.transcript_data|length > 50 %}
+                        <div class="text-center p-3">
+                            <a href="/transcript/{{ analysis_id }}" class="btn btn-primary">
+                                Tüm Transkripti Görüntüle ({{ result.transcript_data|length }} segment)
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Tab -->
+        <div class="tab-pane fade" id="gallery" role="tabpanel">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="mb-3">Frame Galerisi Önizleme</h5>
+                    <div class="row g-3">
+                        {% for frame in (result.sentence_frames[:12] + result.interval_frames[:12])[:12] %}
+                        <div class="col-md-3">
+                            <div class="card">
+                                <img src="/static/{{ result.images_dir }}/{{ frame.filename }}" 
+                                     class="card-img-top" 
+                                     alt="Frame"
+                                     style="cursor: pointer;"
+                                     onclick="showImageModal(this.src)">
+                                <div class="card-body p-2">
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-clock"></i> {{ frame.time_formatted }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="/gallery/{{ analysis_id }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-images"></i> 
+                            Tüm Galeriye Git ({{ result.sentence_frames_count + result.interval_frames_count }} frame)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Frame Önizleme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="" id="modalImage" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showImageModal(src) {
+    $('#modalImage').attr('src', src);
+    new bootstrap.Modal($('#imageModal')).show();
+}
+
+$(document).ready(function() {
+    $('#searchBtn').click(function() {
+        const query = $('#searchInput').val();
+        if (query) {
+            window.location.href = '/transcript/{{ analysis_id }}?q=' + encodeURIComponent(query);
+        }
+    });
+
+    $('#searchInput').keypress(function(e) {
+        if (e.which == 13) {
+            $('#searchBtn').click();
+        }
+    });
+});
+</script>
+{% endblock %}
