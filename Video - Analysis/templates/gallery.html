@@ -81,11 +81,18 @@
                     <small class="text-muted d-block">
                         <i class="bi bi-file-image"></i> {{ frame.filename }}
                     </small>
-                    {% if frame.type == 'sentence' %}
-                    <span class="badge bg-primary mt-1">Cümle</span>
-                    {% else %}
-                    <span class="badge bg-secondary mt-1">Düzenli</span>
-                    {% endif %}
+                    <div class="d-flex gap-1 mt-2">
+                        {% if frame.type == 'sentence' %}
+                        <span class="badge bg-primary">Cümle</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Düzenli</span>
+                        {% endif %}
+                        <button class="badge bg-info border-0" 
+                                style="cursor: pointer;"
+                                onclick="analyzeFrame(event, '{{ frame.filename }}')">
+                            <i class="bi bi-robot"></i> AI
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -226,6 +233,58 @@ $(document).ready(function() {
             }
         }
     });
+    
+    // AI Frame Analizi
+    window.analyzeFrame = async function(event, frameName) {
+        event.stopPropagation(); // Modal açılmasını engelle
+        
+        const analysisId = '{{ analysis_id }}';
+        
+        // Butonu loading yap
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        btn.disabled = true;
+        
+        try {
+            const response = await fetch(`/api/analyze-frame/${analysisId}/${frameName}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Modal göster
+                const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+                document.getElementById('modalImage').src = event.target.closest('.card').querySelector('img').src;
+                document.getElementById('imageModalLabel').innerHTML = `
+                    <i class="bi bi-robot"></i> AI Analizi: ${frameName}
+                `;
+                
+                // Modal body'ye analiz ekle
+                const modalBody = document.querySelector('#imageModal .modal-body');
+                modalBody.innerHTML = `
+                    <img src="${event.target.closest('.card').querySelector('img').src}" 
+                         class="img-fluid mb-3" alt="${frameName}">
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-lightbulb"></i> AI Görüş:</h6>
+                        <p class="mb-0">${data.analysis}</p>
+                    </div>
+                `;
+                
+                modal.show();
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        } catch (error) {
+            alert('Bağlantı hatası: ' + error.message);
+        } finally {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
+    };
 });
 </script>
 {% endblock %}
+

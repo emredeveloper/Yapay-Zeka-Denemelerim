@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}Video Q&A - AI Asistan{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Başlık -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">
+                <i class="bi bi-robot"></i> Video Q&A - AI Asistan
+            </h1>
+            <p class="lead">Video hakkında istediğiniz soruyu sorun, AI size yardımcı olsun!</p>
+            
+            <div class="d-flex gap-2 mb-3">
+                <a href="/results/{{ analysis_id }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Geri Dön
+                </a>
+                <a href="/transcript/{{ analysis_id }}" class="btn btn-info">
+                    <i class="bi bi-file-text"></i> Transkript
+                </a>
+                <a href="/gallery/{{ analysis_id }}" class="btn btn-success">
+                    <i class="bi bi-images"></i> Galeri
+                </a>
+            </div>
+            
+            {% if not ollama_available %}
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Uyarı:</strong> Ollama bağlantısı yok! AI özellikleri çalışmayacak.
+                <br>
+                <small>Ollama'yı başlatın: <code>ollama serve</code></small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Video Player - Tam Genişlik -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body p-2">
+                    <h5 class="card-title mb-2">
+                        <i class="bi bi-youtube text-danger"></i> {{ result.video_info.title }}
+                    </h5>
+                    <!-- Video Player -->
+                    <div class="ratio ratio-16x9">
+                        <iframe 
+                            id="videoPlayer"
+                            src="https://www.youtube.com/embed/{{ result.video_id }}?enablejsapi=1&rel=0"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle"></i> Arama sonuçlarına tıklayınca video otomatik olarak o andan başlar
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-chat-dots"></i> Sohbet
+                </div>
+                <div class="card-body" id="chatContainer" style="height: 500px; overflow-y: auto;">
+                    <!-- Mesajlar buraya eklenecek -->
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-chat-square-text" style="font-size: 3rem;"></i>
+                        <p class="mt-3">Video hakkında bir soru sorun!</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <form id="questionForm">
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="questionInput" 
+                                   placeholder="Sorunuzu yazın..."
+                                   {% if not ollama_available %}disabled{% endif %}>
+                            <button class="btn btn-primary" 
+                                    type="submit" 
+                                    id="askButton"
+                                    {% if not ollama_available %}disabled{% endif %}>
+                                <i class="bi bi-send"></i> Sor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Sidebar - Hızlı Sorular -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <i class="bi bi-lightning"></i> Hızlı Sorular
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Bu soruları tıklayarak hızlıca sorabilirsiniz:</p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-question="Video ne hakkında?"
+                                {% if not ollama_available %}disabled{% endif %}>
+                            Video ne hakkında?
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-question="Ana konular neler?"
+                                {% if not ollama_available %}disabled{% endif %}>
+                            Ana konular neler?
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-question="Önemli noktaları özetle"
+                                {% if not ollama_available %}disabled{% endif %}>
+                            Önemli noktaları özetle
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-question="Hangi zaman diliminde hangi konular işleniyor?"
+                                {% if not ollama_available %}disabled{% endif %}>
+                            Zaman çizelgesi
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-question="Video'dan çıkarılacak dersler neler?"
+                                {% if not ollama_available %}disabled{% endif %}>
+                            Çıkarılacak dersler
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gelişmiş Arama -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-search"></i> Akıllı Arama
+                </div>
+                <div class="card-body">
+                    <form id="smartSearchForm">
+                        <div class="mb-3">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="searchQuery" 
+                                   placeholder="Arama yapın..."
+                                   {% if not ollama_available %}disabled{% endif %}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Arama Türü:</label>
+                            <select class="form-select" id="searchType" {% if not ollama_available %}disabled{% endif %}>
+                                <option value="both">Hem Metin Hem Görsel</option>
+                                <option value="text">Sadece Metin</option>
+                                <option value="visual">Sadece Görsel</option>
+                            </select>
+                        </div>
+                        <button type="submit" 
+                                class="btn btn-success w-100"
+                                {% if not ollama_available %}disabled{% endif %}>
+                            <i class="bi bi-search"></i> Ara
+                        </button>
+                    </form>
+                    
+                    <!-- Arama Sonuçları -->
+                    <div id="searchResults" class="mt-3" style="display: none;">
+                        <hr>
+                        <h6>Sonuçlar:</h6>
+                        <div id="searchResultsContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Frame Analiz Modal -->
+<div class="modal fade" id="frameAnalysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-image"></i> Görsel Analizi
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalFrameImage" src="" class="img-fluid mb-3" alt="Frame">
+                <div id="modalFrameAnalysis" class="alert alert-info">
+                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                    Analiz ediliyor...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const analysisId = '{{ analysis_id }}';
+const chatContainer = document.getElementById('chatContainer');
+const questionForm = document.getElementById('questionForm');
+const questionInput = document.getElementById('questionInput');
+const askButton = document.getElementById('askButton');
+
+// Mesaj ekleme
+function addMessage(content, isUser = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `mb-3 ${isUser ? 'text-end' : 'text-start'}`;
+    
+    const badge = isUser 
+        ? '<span class="badge bg-primary mb-1"><i class="bi bi-person"></i> Siz</span>'
+        : '<span class="badge bg-success mb-1"><i class="bi bi-robot"></i> AI</span>';
+    
+    messageDiv.innerHTML = `
+        ${badge}
+        <div class="card d-inline-block ${isUser ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
+            <div class="card-body py-2 px-3">
+                ${content}
+            </div>
+        </div>
+    `;
+    
+    // İlk mesajsa empty state'i kaldır
+    const emptyState = chatContainer.querySelector('.text-center.text-muted');
+    if (emptyState) {
+        emptyState.remove();
+    }
+    
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// Soru sorma
+questionForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const question = questionInput.value.trim();
+    if (!question) return;
+    
+    // Kullanıcı mesajını ekle
+    addMessage(question, true);
+    questionInput.value = '';
+    
+    // Loading mesajı
+    const loadingId = 'loading_' + Date.now();
+    addMessage(`<div id="${loadingId}"><div class="spinner-border spinner-border-sm" role="status"></div> Düşünüyorum...</div>`, false);
+    
+    // Butonu devre dışı bırak
+    askButton.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/ask/${analysisId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question})
+        });
+        
+        const data = await response.json();
+        
+        // Loading mesajını kaldır
+        document.getElementById(loadingId).parentElement.parentElement.remove();
+        
+        if (response.ok) {
+            addMessage(data.answer, false);
+        } else {
+            addMessage(`❌ Hata: ${data.error}`, false);
+        }
+    } catch (error) {
+        document.getElementById(loadingId).parentElement.parentElement.remove();
+        addMessage(`❌ Bağlantı hatası: ${error.message}`, false);
+    } finally {
+        askButton.disabled = false;
+        questionInput.focus();
+    }
+});
+
+// Hızlı sorular
+document.querySelectorAll('.quick-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+        questionInput.value = btn.dataset.question;
+        questionForm.dispatchEvent(new Event('submit'));
+    });
+});
+
+// Akıllı arama
+document.getElementById('smartSearchForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const query = document.getElementById('searchQuery').value.trim();
+    const type = document.getElementById('searchType').value;
+    
+    if (!query) return;
+    
+    const resultsDiv = document.getElementById('searchResults');
+    const resultsContent = document.getElementById('searchResultsContent');
+    
+    resultsDiv.style.display = 'block';
+    resultsContent.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Aranıyor...';
+    
+    try {
+        const response = await fetch(`/api/smart-search/${analysisId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({query, type})
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            let html = '';
+            
+            // Metin sonuçları
+            if (data.text_results && data.text_results.length > 0) {
+                html += `<p><strong>📝 Metin Sonuçları (${data.total_text}):</strong></p>`;
+                html += '<div class="list-group mb-2">';
+                data.text_results.slice(0, 5).forEach(r => {
+                    // Frame ismi oluştur (tahmin)
+                    const timeMatch = r.time_formatted.match(/(\d+):(\d+)/);
+                    const frameName = timeMatch ? `sentence_time_${timeMatch[1]}m${timeMatch[2]}s.jpg` : '';
+                    
+                    html += `
+                        <div class="list-group-item list-group-item-action" 
+                             style="cursor: pointer;"
+                             onclick="playVideoFromTime(${r.start})"
+                             title="Videoyu bu andan başlat">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> ${r.time_formatted}
+                                </small>
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-play-fill"></i>
+                                </span>
+                            </div>
+                            <p class="mb-0 small mt-1">${r.text}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Görsel sonuçları
+            if (data.visual_results && data.visual_results.length > 0) {
+                html += `<p><strong>🖼️ Görsel Sonuçları (${data.total_visual}):</strong></p>`;
+                html += '<div class="row g-2">';
+                data.visual_results.forEach(r => {
+                    // Zaman bilgisini frame isminden çıkar
+                    const timeMatch = r.frame.match(/time_(\d+)m(\d+)s/);
+                    const timeStr = timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : '';
+                    
+                    html += `
+                        <div class="col-4">
+                            <div class="position-relative">
+                                <img src="/static/${r.path}" 
+                                     class="img-fluid rounded border border-2 border-primary" 
+                                     style="cursor: pointer; height: 120px; width: 100%; object-fit: cover;"
+                                     onclick="playVideoAtFrame('${r.frame}')"
+                                     title="Videoyu ${timeStr} anından başlat">
+                                <div class="position-absolute top-0 end-0 m-1">
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-play-fill"></i> ${timeStr}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            if (html === '') {
+                html = '<p class="text-muted">Sonuç bulunamadı.</p>';
+            }
+            
+            resultsContent.innerHTML = html;
+        } else {
+            resultsContent.innerHTML = `<p class="text-danger">Hata: ${data.error}</p>`;
+        }
+    } catch (error) {
+        resultsContent.innerHTML = `<p class="text-danger">Bağlantı hatası: ${error.message}</p>`;
+    }
+});
+
+// Frame analizi göster
+function showFrameAnalysis(frameName, analysis) {
+    const modal = new bootstrap.Modal(document.getElementById('frameAnalysisModal'));
+    document.getElementById('modalFrameImage').src = `/static/results/${analysisId.split('_')[0]}_*/images/${frameName}`;
+    document.getElementById('modalFrameAnalysis').innerHTML = analysis;
+    modal.show();
+}
+
+// Frame isimden timestamp çıkar ve videoyu oynat
+function playVideoAtFrame(frameName) {
+    // Frame ismi formatı: sentence_0001_time_00m44s.jpg
+    const match = frameName.match(/time_(\d+)m(\d+)s/);
+    if (match) {
+        const minutes = parseInt(match[1]);
+        const seconds = parseInt(match[2]);
+        const totalSeconds = minutes * 60 + seconds;
+        playVideoFromTime(totalSeconds);
+    }
+}
+
+// Videoyu belirtilen saniyeden başlat
+function playVideoFromTime(seconds) {
+    const iframe = document.getElementById('videoPlayer');
+    const videoId = '{{ result.video_id }}';
+    iframe.src = `https://www.youtube.com/embed/${videoId}?start=${Math.floor(seconds)}&autoplay=1&enablejsapi=1&rel=0`;
+    
+    // Sayfayı yukarı kaydır (video görünsün)
+    document.querySelector('.row.mb-4').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // Zaman formatı
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const timeStr = `${minutes}:${secs.toString().padStart(2, '0')}`;
+    
+    // Bildirim göster
+    showToast(`Video ${timeStr} anından başlatılıyor...`);
+}
+
+// Toast bildirimi
+function showToast(message) {
+    const toastDiv = document.createElement('div');
+    toastDiv.className = 'position-fixed bottom-0 end-0 p-3';
+    toastDiv.style.zIndex = '11';
+    toastDiv.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-play-circle me-2"></i>
+                <strong class="me-auto">Video Player</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toastDiv);
+    setTimeout(() => toastDiv.remove(), 3000);
+}
+</script>
+
+<style>
+#chatContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chatContainer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#chatContainer::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#chatContainer::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.quick-question:hover:not(:disabled) {
+    transform: translateX(5px);
+    transition: transform 0.2s;
+}
+</style>
+{% endblock %}
