@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Frame Galerisi{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                                <i class="bi bi-images"></i> Frame Galerisi
+                            </h2>
+                            <p class="text-muted mb-0">Toplam {{ frames|length }} frame</p>
+                        </div>
+                        <a href="/results/{{ analysis_id }}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left"></i> Geri
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label">Filtrele:</label>
+                            <select class="form-select" id="frameFilter">
+                                <option value="all">Tüm Frame'ler</option>
+                                <option value="sentence">Cümle Frame'leri</option>
+                                <option value="interval">Düzenli Frame'ler</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sıralama:</label>
+                            <select class="form-select" id="sortOrder">
+                                <option value="asc">Zamana Göre (Baştan)</option>
+                                <option value="desc">Zamana Göre (Sondan)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Görünüm:</label>
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-primary active" data-view="grid">
+                                    <i class="bi bi-grid-3x3"></i> Grid
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-view="list">
+                                    <i class="bi bi-list"></i> Liste
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Galeri -->
+    <div class="row g-3" id="galleryContainer">
+        {% for frame in frames %}
+        <div class="col-md-3 gallery-item" 
+             data-type="{{ frame.type }}" 
+             data-timestamp="{{ frame.get('timestamp', 0) }}">
+            <div class="card h-100 shadow-sm">
+                <img src="/static/{{ frame.path }}" 
+                     class="card-img-top" 
+                     alt="{{ frame.filename }}"
+                     style="cursor: pointer; height: 200px; object-fit: cover;"
+                     onclick="showImageModal('/static/{{ frame.path }}', '{{ frame.get('time', 'N/A') }}', '{{ frame.filename }}')">
+                <div class="card-body p-2">
+                    <small class="text-muted d-block">
+                        <i class="bi bi-clock"></i> {{ frame.get('time', 'N/A') }}
+                    </small>
+                    <small class="text-muted d-block">
+                        <i class="bi bi-file-image"></i> {{ frame.filename }}
+                    </small>
+                    {% if frame.type == 'sentence' %}
+                    <span class="badge bg-primary mt-1">Cümle</span>
+                    {% else %}
+                    <span class="badge bg-secondary mt-1">Düzenli</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Empty State -->
+    <div class="row" id="emptyState" style="display: none;">
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-images text-muted" style="font-size: 4rem;"></i>
+            <h4 class="mt-3 text-muted">Frame bulunamadı</h4>
+            <p class="text-muted">Seçili filtre için frame mevcut değil</p>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-0" id="modalTitle">Frame Önizleme</h5>
+                    <small class="text-muted" id="modalTime"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img src="" id="modalImage" class="img-fluid w-100">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <a href="" id="downloadLink" class="btn btn-primary" download>
+                    <i class="bi bi-download"></i> İndir
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentView = 'grid';
+
+function showImageModal(src, time, filename) {
+    $('#modalImage').attr('src', src);
+    $('#modalTitle').text(filename);
+    $('#modalTime').text('Zaman: ' + time);
+    $('#downloadLink').attr('href', src);
+    new bootstrap.Modal($('#imageModal')).show();
+}
+
+function filterGallery() {
+    const filter = $('#frameFilter').val();
+    const sortOrder = $('#sortOrder').val();
+    
+    let $items = $('.gallery-item');
+    
+    // Filtrele
+    if (filter === 'all') {
+        $items.show();
+    } else {
+        $items.hide();
+        $items.filter('[data-type="' + filter + '"]').show();
+    }
+    
+    // Görünür item sayısını kontrol et
+    const visibleCount = $items.filter(':visible').length;
+    
+    if (visibleCount === 0) {
+        $('#galleryContainer').hide();
+        $('#emptyState').show();
+    } else {
+        $('#galleryContainer').show();
+        $('#emptyState').hide();
+        
+        // Sırala
+        let sorted = $items.filter(':visible').sort(function(a, b) {
+            const aTime = parseInt($(a).data('timestamp')) || 0;
+            const bTime = parseInt($(b).data('timestamp')) || 0;
+            return sortOrder === 'asc' ? aTime - bTime : bTime - aTime;
+        });
+        
+        $('#galleryContainer').append(sorted);
+    }
+}
+
+function changeView(view) {
+    currentView = view;
+    
+    if (view === 'grid') {
+        $('.gallery-item').removeClass('col-12').addClass('col-md-3');
+        $('.gallery-item .card-img-top').css('height', '200px');
+    } else {
+        $('.gallery-item').removeClass('col-md-3').addClass('col-12');
+        $('.gallery-item .card-img-top').css('height', '300px');
+    }
+}
+
+$(document).ready(function() {
+    // Filtre değişikliği
+    $('#frameFilter, #sortOrder').on('change', filterGallery);
+    
+    // Görünüm değişikliği
+    $('[data-view]').on('click', function() {
+        $('[data-view]').removeClass('active');
+        $(this).addClass('active');
+        changeView($(this).data('view'));
+    });
+    
+    // Keyboard navigation
+    $(document).on('keydown', function(e) {
+        if ($('#imageModal').hasClass('show')) {
+            const $currentImg = $('#modalImage');
+            const currentSrc = $currentImg.attr('src');
+            const $allImages = $('.gallery-item:visible img');
+            const currentIndex = $allImages.toArray().findIndex(img => $(img).attr('src') === currentSrc);
+            
+            if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                // Önceki resim
+                const $prevImg = $allImages.eq(currentIndex - 1);
+                showImageModal(
+                    $prevImg.attr('src'),
+                    $prevImg.closest('.gallery-item').find('.bi-clock').parent().text().trim(),
+                    $prevImg.attr('alt')
+                );
+            } else if (e.key === 'ArrowRight' && currentIndex < $allImages.length - 1) {
+                // Sonraki resim
+                const $nextImg = $allImages.eq(currentIndex + 1);
+                showImageModal(
+                    $nextImg.attr('src'),
+                    $nextImg.closest('.gallery-item').find('.bi-clock').parent().text().trim(),
+                    $nextImg.attr('alt')
+                );
+            } else if (e.key === 'Escape') {
+                bootstrap.Modal.getInstance($('#imageModal')).hide();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

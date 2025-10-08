@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 mb-3">
+                <i class="bi bi-camera-video text-primary"></i>
+                YouTube Video Analiz Aracı
+            </h1>
+            <p class="lead text-muted">
+                YouTube videolarından transkript, görsel frame'ler ve detaylı istatistikler çıkarın
+            </p>
+        </div>
+    </div>
+
+    <!-- Analiz Formu -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-4">
+                        <i class="bi bi-play-circle"></i> Video Analizi Başlat
+                    </h3>
+                    
+                    <form id="analyzeForm">
+                        <!-- URL Input -->
+                        <div class="mb-4">
+                            <label for="videoUrl" class="form-label">YouTube Video URL'si</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">
+                                    <i class="bi bi-link-45deg"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="videoUrl" 
+                                       placeholder="https://www.youtube.com/watch?v=..." 
+                                       required>
+                            </div>
+                            <div class="form-text">
+                                Desteklenen formatlar: youtube.com/watch?v=..., youtu.be/...
+                            </div>
+                        </div>
+
+                        <!-- Ayarlar -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <i class="bi bi-gear"></i> Analiz Ayarları
+                                </h5>
+                                
+                                <!-- Frame Çıkarma -->
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="extractInterval" 
+                                               checked>
+                                        <label class="form-check-label" for="extractInterval">
+                                            Düzenli aralıklarla frame çıkar
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Aralık -->
+                                <div class="mb-3" id="intervalSettings">
+                                    <label for="intervalSeconds" class="form-label">
+                                        Frame çıkarma aralığı (saniye)
+                                    </label>
+                                    <input type="range" 
+                                           class="form-range" 
+                                           id="intervalSeconds" 
+                                           min="5" 
+                                           max="60" 
+                                           step="5" 
+                                           value="30">
+                                    <div class="text-muted">
+                                        <i class="bi bi-clock"></i> 
+                                        Her <strong id="intervalValue">30</strong> saniyede bir
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="bi bi-play-fill"></i> Analizi Başlat
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Section (Hidden initially) -->
+    <div class="row mt-4" id="progressSection" style="display: none;">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-hourglass-split"></i> Analiz İlerlemesi
+                    </h5>
+                    
+                    <div class="progress mb-3" style="height: 30px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             id="progressBar" 
+                             style="width: 0%">
+                            0%
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info" id="progressMessage">
+                        <i class="bi bi-info-circle"></i> Hazırlanıyor...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özellikler -->
+    <div class="row mt-5 mb-5">
+        <div class="col-lg-10 mx-auto">
+            <h3 class="text-center mb-4">
+                <i class="bi bi-stars"></i> Özellikler
+            </h3>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-file-text fs-3"></i>
+                            </div>
+                            <h5 class="card-title">Transkript Çıkarma</h5>
+                            <p class="card-text text-muted">
+                                Video transkriptini otomatik olarak çıkarır ve zaman damgalarıyla kaydeder
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="feature-icon bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-images fs-3"></i>
+                            </div>
+                            <h5 class="card-title">Frame Galerisi</h5>
+                            <p class="card-text text-muted">
+                                Cümle bitimlerinde ve düzenli aralıklarla frame'leri otomatik çıkarır
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="feature-icon bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-search fs-3"></i>
+                            </div>
+                            <h5 class="card-title">Akıllı Arama</h5>
+                            <p class="card-text text-muted">
+                                Transkript içinde arama yapın ve zaman damgalarını görüntüleyin
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let currentAnalysisId = null;
+    let statusCheckInterval = null;
+
+    // Interval slider güncelleme
+    $('#intervalSeconds').on('input', function() {
+        $('#intervalValue').text($(this).val());
+    });
+
+    // Extract interval toggle
+    $('#extractInterval').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#intervalSettings').slideDown();
+        } else {
+            $('#intervalSettings').slideUp();
+        }
+    });
+
+    // Form submit
+    $('#analyzeForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const url = $('#videoUrl').val().trim();
+        const extractInterval = $('#extractInterval').is(':checked');
+        const intervalSeconds = parseInt($('#intervalSeconds').val());
+
+        if (!url) {
+            alert('Lütfen bir YouTube URL\'si girin!');
+            return;
+        }
+
+        // Butonu devre dışı bırak
+        $('#submitBtn').prop('disabled', true).html(
+            '<span class="spinner-border spinner-border-sm me-2"></span>Başlatılıyor...'
+        );
+
+        // Analizi başlat
+        $.ajax({
+            url: '/analyze',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                url: url,
+                extract_interval: extractInterval,
+                interval_seconds: intervalSeconds
+            }),
+            success: function(response) {
+                currentAnalysisId = response.analysis_id;
+                $('#progressSection').slideDown();
+                
+                // İlerleme kontrolünü başlat
+                statusCheckInterval = setInterval(checkStatus, 1000);
+            },
+            error: function(xhr) {
+                alert('Hata: ' + (xhr.responseJSON?.error || 'Bilinmeyen hata'));
+                $('#submitBtn').prop('disabled', false).html(
+                    '<i class="bi bi-play-fill"></i> Analizi Başlat'
+                );
+            }
+        });
+    });
+
+    function checkStatus() {
+        if (!currentAnalysisId) return;
+
+        $.ajax({
+            url: '/status/' + currentAnalysisId,
+            method: 'GET',
+            success: function(data) {
+                // İlerleme güncelle
+                const progress = data.progress || 0;
+                $('#progressBar').css('width', progress + '%').text(progress + '%');
+                $('#progressMessage').html(
+                    '<i class="bi bi-info-circle"></i> ' + data.message
+                );
+
+                // Durum kontrolü
+                if (data.status === 'completed') {
+                    clearInterval(statusCheckInterval);
+                    
+                    $('#progressBar').removeClass('progress-bar-animated progress-bar-striped')
+                                    .addClass('bg-success');
+                    $('#progressMessage').removeClass('alert-info')
+                                        .addClass('alert-success')
+                                        .html('<i class="bi bi-check-circle"></i> Analiz tamamlandı! Yönlendiriliyorsunuz...');
+                    
+                    // Sonuç sayfasına yönlendir
+                    setTimeout(function() {
+                        window.location.href = '/results/' + currentAnalysisId;
+                    }, 1500);
+                } else if (data.status === 'error') {
+                    clearInterval(statusCheckInterval);
+                    
+                    $('#progressBar').removeClass('progress-bar-animated progress-bar-striped')
+                                    .addClass('bg-danger');
+                    $('#progressMessage').removeClass('alert-info')
+                                        .addClass('alert-danger')
+                                        .html('<i class="bi bi-x-circle"></i> Hata: ' + data.message);
+                    
+                    $('#submitBtn').prop('disabled', false).html(
+                        '<i class="bi bi-play-fill"></i> Analizi Başlat'
+                    );
+                }
+            },
+            error: function() {
+                clearInterval(statusCheckInterval);
+                alert('Durum kontrolü hatası!');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

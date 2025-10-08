@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Sayfa Bulunamadı - 404{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 60vh;">
+        <div class="col-md-6 text-center">
+            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 6rem;"></i>
+            <h1 class="display-1 fw-bold mt-4">404</h1>
+            <h2 class="mb-4">Sayfa Bulunamadı</h2>
+            <p class="lead text-muted mb-4">
+                Aradığınız sayfa bulunamadı veya taşınmış olabilir.
+            </p>
+            <a href="/" class="btn btn-primary btn-lg">
+                <i class="bi bi-house-door"></i> Ana Sayfaya Dön
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

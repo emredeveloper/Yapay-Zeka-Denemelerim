@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Sunucu Hatası - 500{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 60vh;">
+        <div class="col-md-6 text-center">
+            <i class="bi bi-x-octagon text-danger" style="font-size: 6rem;"></i>
+            <h1 class="display-1 fw-bold mt-4">500</h1>
+            <h2 class="mb-4">Sunucu Hatası</h2>
+            <p class="lead text-muted mb-4">
+                Üzgünüz, bir şeyler ters gitti. Lütfen daha sonra tekrar deneyin.
+            </p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <a href="/" class="btn btn-primary btn-lg">
+                    <i class="bi bi-house-door"></i> Ana Sayfaya Dön
+                </a>
+                <button onclick="location.reload()" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-clockwise"></i> Sayfayı Yenile
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

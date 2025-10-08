@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Transkript Arama{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">
+                                <i class="bi bi-file-text"></i> Video Transkripti
+                            </h2>
+                            <p class="text-muted mb-0">
+                                {% if query %}
+                                    Arama: "{{ query }}" - {{ filtered_count }} / {{ total_count }} sonuç
+                                {% else %}
+                                    Toplam {{ total_count }} segment
+                                {% endif %}
+                            </p>
+                        </div>
+                        <a href="/results/{{ analysis_id }}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left"></i> Geri
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arama -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="/transcript/{{ analysis_id }}">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="q" 
+                                   placeholder="Transkript içinde kelime veya cümle ara..." 
+                                   value="{{ query or '' }}"
+                                   autofocus>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-search"></i> Ara
+                            </button>
+                            {% if query %}
+                            <a href="/transcript/{{ analysis_id }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Temizle
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                    
+                    {% if query %}
+                    <div class="mt-3">
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>{{ filtered_count }}</strong> sonuç bulundu (Toplam {{ total_count }} segmentten)
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transkript -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    {% if transcript|length > 0 %}
+                    <div id="transcriptContent">
+                        {% for entry in transcript %}
+                        <div class="transcript-entry p-3 mb-2 border rounded" 
+                             data-start="{{ entry.start }}"
+                             {% if query and query.lower() in entry.text.lower() %}
+                             style="background-color: #fff3cd;"
+                             {% endif %}>
+                            <div class="d-flex align-items-start">
+                                <div class="me-3" style="min-width: 80px;">
+                                    <span class="badge bg-primary badge-lg">
+                                        {{ "%02d:%02d" | format(entry.start // 60, entry.start % 60) }}
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-0 transcript-text">
+                                        {% if query %}
+                                            {{ entry.text | replace(query, '<mark>' ~ query ~ '</mark>') | replace(query.lower(), '<mark>' ~ query.lower() ~ '</mark>') | replace(query.upper(), '<mark>' ~ query.upper() ~ '</mark>') | safe }}
+                                        {% else %}
+                                            {{ entry.text }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="ms-3">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="copyTimestamp({{ entry.start }})">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if filtered_count > 100 %}
+                    <div class="text-center mt-4">
+                        <p class="text-muted">
+                            İlk 100 sonuç gösteriliyor. Daha spesifik arama yapın.
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-search text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3 text-muted">Sonuç bulunamadı</h4>
+                        <p class="text-muted">
+                            "{{ query }}" için eşleşen sonuç yok. Farklı bir arama deneyin.
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- İstatistikler -->
+    {% if query %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-graph-up"></i> Arama İstatistikleri
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <h3 class="text-primary">{{ filtered_count }}</h3>
+                            <p class="text-muted mb-0">Eşleşme Sayısı</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h3 class="text-success">{{ "%.1f" | format((filtered_count / total_count * 100) if total_count > 0 else 0) }}%</h3>
+                            <p class="text-muted mb-0">Kapsama Oranı</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h3 class="text-info">{{ total_count }}</h3>
+                            <p class="text-muted mb-0">Toplam Segment</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Hızlı Erişim -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-lightning"></i> Hızlı İşlemler
+                    </h5>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="scrollToTop()">
+                            <i class="bi bi-arrow-up"></i> Başa Dön
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="scrollToBottom()">
+                            <i class="bi bi-arrow-down"></i> Sona Git
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="exportTranscript()">
+                            <i class="bi bi-download"></i> Dışa Aktar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast for copy confirmation -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="copyToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            <strong class="me-auto">Başarılı</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Zaman damgası kopyalandı!
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyTimestamp(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const timestamp = `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    
+    navigator.clipboard.writeText(timestamp).then(function() {
+        const toast = new bootstrap.Toast(document.getElementById('copyToast'));
+        toast.show();
+    });
+}
+
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function scrollToBottom() {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function exportTranscript() {
+    const entries = document.querySelectorAll('.transcript-entry');
+    let text = 'VIDEO TRANSKRİPTİ\n';
+    text += '='.repeat(50) + '\n\n';
+    
+    entries.forEach(entry => {
+        const timestamp = entry.querySelector('.badge').textContent.trim();
+        const content = entry.querySelector('.transcript-text').textContent.trim();
+        text += `[${timestamp}] ${content}\n\n`;
+    });
+    
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'transcript_{{ analysis_id }}.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+$(document).ready(function() {
+    // Highlight search terms on load
+    {% if query %}
+    $('.transcript-text mark').each(function() {
+        $(this).css({
+            'background-color': '#ffeb3b',
+            'padding': '2px 4px',
+            'border-radius': '3px',
+            'font-weight': 'bold'
+        });
+    });
+    {% endif %}
+    
+    // Smooth scroll to first result
+    {% if query and filtered_count > 0 %}
+    setTimeout(function() {
+        const firstHighlight = $('[style*="background-color: #fff3cd"]').first();
+        if (firstHighlight.length) {
+            $('html, body').animate({
+                scrollTop: firstHighlight.offset().top - 100
+            }, 500);
+        }
+    }, 500);
+    {% endif %}
+});
+</script>
+{% endblock %}
