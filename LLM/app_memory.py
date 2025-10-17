@@ -1,20 +1,26 @@
 from flask import Flask, render_template, request, jsonify
 import json
 import os
+import base64
 from memory_llm import Qwen3VLAgent
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'memory-agent-secret'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
-# Global agent instance
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
 agent = None
 chat_history = []
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 def init_agent():
-    """Agent'ı başlat"""
     global agent
     api_key = os.getenv("OLLAMA_API_KEY")
     if not api_key:
@@ -29,13 +35,11 @@ def init_agent():
 
 @app.route('/')
 def index():
-    """Ana sayfa"""
     return render_template('dashboard.html')
 
 
 @app.route('/api/status')
 def status():
-    """Sistem durumu"""
     if agent is None:
         return jsonify({"status": "offline", "message": "Agent başlatılmamış"}), 503
     
@@ -55,21 +59,19 @@ def status():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Chat endpoint"""
     if agent is None:
         return jsonify({"error": "Agent offline"}), 503
     
     data = request.json
     user_message = data.get('message', '').strip()
+    image_base64 = data.get('image', None)
     
     if not user_message:
         return jsonify({"error": "Mesaj boş"}), 400
     
     try:
-        # Agent'tan yanıt al
-        result = agent.chat(user_message)
+        result = agent.chat(user_message, image_base64=image_base64)
         
-        # Geçmişe ekle
         chat_entry = {
             "user": user_message,
             "assistant": result['response'],
@@ -84,6 +86,7 @@ def chat():
             "response": result['response'],
             "logs": result['logs'],
             "memory_state": result['memory_state'],
+            "prompt_used": result['prompt_used'],
             "metadata": result['metadata'],
             "history_length": len(chat_history)
         })
@@ -91,28 +94,46 @@ def chat():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/image/encode', methods=['POST'])
+def encode_image():
+    if 'file' not in request.files:
+        return jsonify({"error": "Dosya yok"}), 400
+    
+    file = request.files['file']
+    if file.filename == '' or not allowed_file(file.filename):
+        return jsonify({"error": "Geçersiz dosya"}), 400
+    
+    try:
+        file_data = file.read()
+        base64_data = base64.b64encode(file_data).decode()
+        return jsonify({
+            "success": True,
+            "base64": base64_data,
+            "filename": secure_filename(file.filename)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/memory/view')
 def view_memory():
-    """Bellek durumunu görüntüle"""
     if agent is None:
         return jsonify({"error": "Agent offline"}), 503
     
     try:
-        # STM (Kısa Vadeli Bellek)
         stm_data = agent.stm.get_summary()
-        
-        # LTM (Uzun Vadeli Bellek) - örnek veriler
         ltm_count = agent.ltm.count()
-        
-        # Episodik log
+        visuals = agent.ltm.get_all_visuals()
         episodic_recent = agent.episodic.recent(10)
         
         return jsonify({
             "short_term": stm_data,
             "long_term": {
                 "document_count": ltm_count,
+                "visual_count": agent.ltm.get_visual_count(),
                 "embedder": "all-MiniLM-L6-v2"
             },
+            "visuals": visuals,
             "episodic": episodic_recent
         })
     except Exception as e:
@@ -121,19 +142,14 @@ def view_memory():
 
 @app.route('/api/memory/clear', methods=['POST'])
 def clear_memory():
-    """Belleği temizle"""
     if agent is None:
         return jsonify({"error": "Agent offline"}), 503
     
     try:
-        # Önce bellek özetini al
         stm_count = len(agent.stm.messages)
         ltm_count = agent.ltm.count()
         
-        # STM'i temizle
         agent.stm.messages = []
-        
-        # Global geçmişi temizle
         global chat_history
         chat_history = []
         
@@ -141,6 +157,7 @@ def clear_memory():
             "success": True,
             "cleared": {
                 "stm_messages": stm_count,
+                "ltm_documents": ltm_count,
                 "history_entries": len(chat_history)
             }
         })
@@ -175,19 +192,18 @@ def latest_logs():
 
 @app.route('/api/analytics')
 def analytics():
-    """Analitikler"""
     if agent is None:
         return jsonify({"error": "Agent offline"}), 503
     
     try:
         total_chats = len(chat_history)
         
-        # İstatistikler
         stats = {
             "total_messages": total_chats,
             "avg_response_length": 0,
             "error_count": 0,
-            "success_count": 0
+            "success_count": 0,
+            "messages_with_images": 0
         }
         
         if total_chats > 0:
@@ -195,9 +211,13 @@ def analytics():
             stats['avg_response_length'] = sum(response_lengths) // len(response_lengths)
             stats['success_count'] = sum(1 for entry in chat_history if not entry['metadata'].get('error'))
             stats['error_count'] = total_chats - stats['success_count']
+            stats['messages_with_images'] = sum(1 for entry in chat_history if entry['metadata'].get('has_image'))
+        
+        episodic_stats = agent.episodic.get_stats()
         
         return jsonify({
-            "stats": stats,
+            "chat_stats": stats,
+            "episodic_stats": episodic_stats,
             "memory": {
                 "stm": agent.stm.get_summary(),
                 "ltm": agent.ltm.get_summary(),
@@ -211,7 +231,6 @@ def analytics():
 if __name__ == '__main__':
     print("🚀 Flask Server başlatılıyor...")
     
-    # Agent'ı başlat
     if init_agent():
         print("✅ Agent başarıyla yüklendi")
         print("🌐 Server: http://localhost:5000")
