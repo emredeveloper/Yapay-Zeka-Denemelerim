@@ -18,6 +18,9 @@ __pycache__/
 # Jupyter Notebook kontrol noktaları
 .ipynb_checkpoints/
 
+chroma_store/
+visual_cache/
+
 .env
 # Python sanal ortamları
 .venv/
