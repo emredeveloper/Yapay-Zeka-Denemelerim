@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}English Learning - {{ result.video_info.Title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="mb-2">
+                        <i class="bi bi-book text-primary"></i> English Learning
+                    </h1>
+                    <p class="text-muted mb-0">Learn vocabulary, grammar patterns, and test your knowledge!</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/results/{{ analysis_id }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                    <a href="/qa/{{ analysis_id }}" class="btn btn-outline-primary">
+                        <i class="bi bi-robot"></i> Q&A
+                    </a>
+                    <a href="/transcript/{{ analysis_id }}" class="btn btn-outline-info">
+                        <i class="bi bi-file-text"></i> Transcript
+                    </a>
+                </div>
+            </div>
+            
+            {% if not ollama_available or error %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <strong>Warning:</strong> {{ error if error else "Ollama connection unavailable! AI features will not work." }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if ollama_available and not error %}
+    <!-- Video Info Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <i class="bi bi-youtube text-danger" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div class="col">
+                            <h5 class="card-title mb-2">{{ result.video_info.Title }}</h5>
+                            <div class="d-flex gap-3 text-muted small">
+                                <span><i class="bi bi-person"></i> {{ result.video_info.Channel }}</span>
+                                <span><i class="bi bi-clock"></i> {{ result.video_info['Duration (mm:ss)'] }}</span>
+                                <span><i class="bi bi-eye"></i> {{ "{:,}".format(result.video_info.Views) }} views</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Content Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <ul class="nav nav-pills nav-fill" id="learningTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="vocabulary-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#vocabulary" type="button" role="tab">
+                                <i class="bi bi-journal-bookmark"></i>
+                                <span class="d-none d-sm-inline">Vocabulary</span>
+                                <span class="badge bg-primary ms-2" id="vocab-count">...</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="quiz-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#quiz" type="button" role="tab">
+                                <i class="bi bi-patch-question"></i>
+                                <span class="d-none d-sm-inline">Quiz</span>
+                                <span class="badge bg-danger ms-2" id="quiz-count">...</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="tab-content" id="learningTabsContent">
+                        
+                        <!-- VOCABULARY TAB -->
+                        <div class="tab-pane fade show active" id="vocabulary" role="tabpanel">
+                            <div class="text-center py-5" id="vocab-loading">
+                                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <h5 class="text-muted">📚 Loading vocabulary...</h5>
+                                <p class="text-muted small">AI is extracting important words from the video</p>
+                            </div>
+                            <div id="vocab-content" style="display: none;"></div>
+                        </div>
+                        
+                        <!-- QUIZ TAB -->
+                        <div class="tab-pane fade" id="quiz" role="tabpanel">
+                            <div class="text-center py-5" id="quiz-loading">
+                                <div class="spinner-border text-danger mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <h5 class="text-muted">❓ Generating quiz questions...</h5>
+                                <p class="text-muted small">Creating interactive questions to test your knowledge</p>
+                            </div>
+                            <div id="quiz-content" style="display: none;"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script>
+// Lazy Loading System
+const analysisId = '{{ analysis_id }}';
+const loadedTabs = {
+    vocabulary: false,
+    quiz: false
+};
+
+// Load vocabulary on page load
+$(document).ready(function() {
+    loadVocabulary();
+});
+
+// Tab click handlers
+$('#learningTabs button').on('shown.bs.tab', function (e) {
+    const tabId = $(e.target).attr('aria-controls');
+    
+    if (!loadedTabs[tabId]) {
+        switch(tabId) {
+            case 'vocabulary': loadVocabulary(); break;
+            case 'quiz': loadQuiz(); break;
+        }
+    }
+});
+
+// VOCABULARY LOADER
+function loadVocabulary() {
+    if (loadedTabs.vocabulary) return;
+    
+    $.ajax({
+        url: `/api/learning-vocabulary/${analysisId}`,
+        method: 'GET',
+        success: function(data) {
+            if (data.error) {
+                showError('vocab', data.error);
+                return;
+            }
+            
+            const vocabulary = data.vocabulary || [];
+            $('#vocab-count').text(vocabulary.length);
+            
+            let html = '<div class="mb-4"><h4 class="fw-bold"><i class="bi bi-journal-bookmark text-primary"></i> Important Vocabulary</h4><p class="text-muted">Key words and phrases from the video with definitions and Turkish translations</p></div>';
+            
+            if (vocabulary.length === 0) {
+                html += '<div class="alert alert-info"><i class="bi bi-info-circle"></i> No vocabulary extracted.</div>';
+            } else {
+                html += '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">';
+                vocabulary.forEach(word => {
+                    html += `
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm hover-shadow">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title text-primary mb-0 fw-bold">${word.word}</h5>
+                                        <span class="badge bg-secondary">${word.pos}</span>
+                                    </div>
+                                    <p class="mb-2 text-dark"><strong>Definition:</strong> ${word.definition}</p>
+                                    <div class="mb-2 p-2 bg-light rounded">
+                                        <small class="text-info fw-semibold"><i class="bi bi-translate"></i> Turkish:</small>
+                                        <div class="text-dark">${word.turkish}</div>
+                                    </div>
+                                    ${word.example ? `<p class="mb-0 text-muted small fst-italic border-start border-3 border-primary ps-2">"${word.example}"</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            $('#vocab-loading').hide();
+            $('#vocab-content').html(html).fadeIn();
+            loadedTabs.vocabulary = true;
+        },
+        error: function(xhr, status, error) {
+            showError('vocab', 'Failed to load vocabulary. Please try again.');
+        }
+    });
+}
+
+// QUIZ LOADER
+function loadQuiz() {
+    if (loadedTabs.quiz) return;
+    
+    $.ajax({
+        url: `/api/learning-quiz/${analysisId}`,
+        method: 'GET',
+        success: function(data) {
+            console.log('Quiz data received:', data);
+            if (data.error) {
+                showError('quiz', data.error);
+                return;
+            }
+            
+            const questions = data.quiz || [];
+            $('#quiz-count').text(questions.length);
+            
+            let html = '<div class="mb-4"><h4 class="fw-bold"><i class="bi bi-patch-question text-danger"></i> Interactive Quiz</h4><p class="text-muted">Test your knowledge with these questions</p></div>';
+            
+            if (questions.length === 0) {
+                html += '<div class="alert alert-info"><i class="bi bi-info-circle"></i> No quiz questions available.</div>';
+            } else {
+                html += `
+                    <div class="alert alert-primary d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <i class="bi bi-trophy"></i>
+                            <strong>Challenge:</strong> Answer all ${questions.length} questions correctly!
+                        </div>
+                        <div>
+                            <span class="badge bg-success me-2" style="font-size: 1rem;">
+                                <i class="bi bi-check-circle"></i> <span id="correctCount">0</span>
+                            </span>
+                            <span class="badge bg-danger" style="font-size: 1rem;">
+                                <i class="bi bi-x-circle"></i> <span id="wrongCount">0</span>
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                questions.forEach((q, index) => {
+                    html += `
+                        <div class="card mb-4 quiz-question border-0 shadow-sm">
+                            <div class="card-header bg-light border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><span class="badge bg-primary me-2">${index + 1}</span>Question ${index + 1} of ${questions.length}</h5>
+                                </div>
+                            </div>
+                            <div class="card-body p-4">
+                                <p class="lead fw-semibold mb-4">${q.question}</p>
+                                <div class="d-grid gap-3">
+                                    ${q.options.map((opt, optIdx) => `
+                                        <button class="btn btn-outline-primary text-start py-3 quiz-option" 
+                                                data-question="${index}"
+                                                data-option="${optIdx}"
+                                                data-correct="${q.correct_answer}">
+                                            <span class="badge bg-primary me-2">${['A', 'B', 'C', 'D'][optIdx]}</span>
+                                            ${opt}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                                <div class="quiz-feedback mt-4" style="display: none;">
+                                    <div class="alert mb-0">
+                                        <h6 class="fw-bold"><i class="bi bi-info-circle"></i> Explanation</h6>
+                                        <p class="mb-0">${q.explanation}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary btn-lg px-5" id="resetQuiz">
+                            <i class="bi bi-arrow-clockwise"></i> Reset Quiz
+                        </button>
+                    </div>
+                `;
+            }
+            
+            $('#quiz-loading').hide();
+            $('#quiz-content').html(html).fadeIn();
+            loadedTabs.quiz = true;
+            
+            // Initialize quiz
+            initQuizHandlers();
+        },
+        error: function(xhr, status, error) {
+            console.error('Quiz load error:', xhr.responseText);
+            showError('quiz', 'Failed to load quiz. Please try again. Error: ' + error);
+        }
+    });
+}
+
+// Quiz handlers
+function initQuizHandlers() {
+    let correctCount = 0;
+    let wrongCount = 0;
+    
+    $('.quiz-option').on('click', function() {
+        const $btn = $(this);
+        const selectedOption = parseInt($btn.data('option'));
+        const correctOption = parseInt($btn.data('correct'));
+        const $card = $btn.closest('.quiz-question');
+        const $feedback = $card.find('.quiz-feedback');
+        const $allBtns = $card.find('.quiz-option');
+        
+        $allBtns.prop('disabled', true);
+        $allBtns.each(function() {
+            if (parseInt($(this).data('option')) === correctOption) {
+                $(this).removeClass('btn-outline-primary').addClass('btn-success');
+            }
+        });
+        
+        if (selectedOption === correctOption) {
+            $btn.addClass('btn-success');
+            correctCount++;
+            $feedback.find('.alert').addClass('alert-success');
+        } else {
+            $btn.removeClass('btn-outline-primary').addClass('btn-danger');
+            wrongCount++;
+            $feedback.find('.alert').addClass('alert-danger');
+        }
+        
+        $feedback.slideDown();
+        $('#correctCount').text(correctCount);
+        $('#wrongCount').text(wrongCount);
+    });
+    
+    $('#resetQuiz').on('click', function() {
+        correctCount = 0;
+        wrongCount = 0;
+        
+        $('.quiz-question').each(function() {
+            const $btns = $(this).find('.quiz-option');
+            const $feedback = $(this).find('.quiz-feedback');
+            
+            $btns.prop('disabled', false)
+                .removeClass('btn-success btn-danger')
+                .addClass('btn-outline-primary');
+            
+            $feedback.hide().find('.alert')
+                .removeClass('alert-success alert-danger');
+        });
+        
+        $('#correctCount').text('0');
+        $('#wrongCount').text('0');
+        $('html, body').animate({ scrollTop: $('#quiz-content').offset().top - 100 }, 500);
+    });
+}
+
+// Error display
+function showError(tabName, message) {
+    $(`#${tabName}-loading`).html(`
+        <div class="alert alert-danger border-0 shadow-sm">
+            <h5><i class="bi bi-exclamation-triangle-fill"></i> Error</h5>
+            <p class="mb-0">${message}</p>
+        </div>
+    `);
+}
+</script>
+
+<style>
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+.nav-pills .nav-link {
+    color: #6c757d;
+    font-weight: 500;
+    border-radius: 0.5rem;
+}
+.nav-pills .nav-link.active {
+    background-color: #0d6efd;
+}
+.accordion-button:not(.collapsed) {
+    color: #0d6efd;
+    background-color: #e7f1ff;
+}
+</style>
+{% endblock %}

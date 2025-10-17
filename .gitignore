@@ -18,6 +18,7 @@ __pycache__/
 # Jupyter Notebook kontrol noktaları
 .ipynb_checkpoints/
 
+.env
 # Python sanal ortamları
 .venv/
 venv/

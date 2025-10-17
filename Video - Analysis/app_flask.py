@@ -604,6 +604,150 @@ def smart_search(analysis_id):
         return jsonify({'error': f'Error: {str(e)}'}), 500
 
 
+@app.route('/learning/<analysis_id>')
+def learning_page(analysis_id):
+    """English learning page from video content"""
+    with analysis_lock:
+        if analysis_id not in analysis_status:
+            return "Analysis not found", 404
+        
+        status_data = analysis_status[analysis_id]
+        if status_data['status'] != 'completed':
+            return "Analysis not yet completed", 400
+        
+        result = status_data['result']
+    
+    # Check Ollama status
+    ollama_available = ollama.check_connection()
+    
+    if not ollama_available:
+        return render_template('learning.html',
+                             analysis_id=analysis_id,
+                             result=result,
+                             ollama_available=False,
+                             error="Ollama is not available. Please start Ollama service.")
+    
+    try:
+        # Get full transcript text
+        transcript_text = result.get('full_text', '')
+        
+        if not transcript_text:
+            return render_template('learning.html',
+                                 analysis_id=analysis_id,
+                                 result=result,
+                                 ollama_available=True,
+                                 error="No transcript available for learning.")
+        
+        # Get sample sentences from transcript
+        transcript_data = result.get('transcript_data', [])
+        sample_sentences = []
+        
+        # Select interesting sentences (longer than 10 words)
+        for entry in transcript_data:
+            text = entry.get('text', '').strip()
+            if len(text.split()) >= 10:
+                sample_sentences.append({
+                    'text': text,
+                    'start': entry.get('start', 0),
+                    'time_formatted': f"{int(entry.get('start', 0) // 60):02d}:{int(entry.get('start', 0) % 60):02d}"
+                })
+            
+            if len(sample_sentences) >= 10:
+                break
+        
+        # NO CONTENT GENERATION - Load on demand via AJAX!
+        return render_template('learning.html',
+                             analysis_id=analysis_id,
+                             result=result,
+                             ollama_available=True)
+    
+    except Exception as e:
+        print(f"Error in learning page: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template('learning.html',
+                             analysis_id=analysis_id,
+                             result=result,
+                             ollama_available=True,
+                             error=f"Error loading learning page: {str(e)}")
+
+
+@app.route('/api/learning-vocabulary/<analysis_id>')
+def api_learning_vocabulary(analysis_id):
+    """API: Get vocabulary (lazy loading)"""
+    with analysis_lock:
+        if analysis_id not in analysis_status:
+            return jsonify({'error': 'Analysis not found'}), 404
+        status_data = analysis_status[analysis_id]
+        if status_data['status'] != 'completed':
+            return jsonify({'error': 'Analysis not completed'}), 400
+        result = status_data['result']
+    if not ollama.check_connection():
+        return jsonify({'error': 'Ollama not available'}), 503
+    try:
+        transcript_text = result.get('full_text', '')
+        if not transcript_text:
+            return jsonify({'error': 'No transcript'}), 400
+        print("📚 Extracting vocabulary...")
+        vocabulary = ollama.extract_vocabulary(transcript_text, level='intermediate', max_words=15)
+        return jsonify({'vocabulary': vocabulary})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/learning-quiz/<analysis_id>')
+def api_learning_quiz(analysis_id):
+    """API: Generate quiz questions (lazy loading)"""
+    print(f"❓ Quiz request received for analysis: {analysis_id}")
+    
+    with analysis_lock:
+        if analysis_id not in analysis_status:
+            print(f"❌ Analysis not found: {analysis_id}")
+            return jsonify({'error': 'Analysis not found'}), 404
+        status_data = analysis_status[analysis_id]
+        if status_data['status'] != 'completed':
+            print(f"❌ Analysis not completed yet: {status_data['status']}")
+            return jsonify({'error': 'Analysis not completed'}), 400
+        result = status_data['result']
+    
+    if not ollama.check_connection():
+        print("❌ Ollama not available")
+        return jsonify({'error': 'Ollama not available'}), 503
+    
+    try:
+        transcript_text = result.get('full_text', '')
+        if not transcript_text:
+            print("❌ No transcript found")
+            return jsonify({'error': 'No transcript'}), 400
+        
+        print(f"📝 Transcript length: {len(transcript_text)} characters")
+        print("📚 Step 1/3: Extracting vocabulary for quiz...")
+        
+        # Get vocabulary first for quiz generation
+        vocabulary = ollama.extract_vocabulary(transcript_text, level='intermediate', max_words=15)
+        print(f"✅ Vocabulary extracted: {len(vocabulary)} words")
+        
+        # Get key sentences from transcript
+        print("📖 Step 2/3: Extracting key sentences...")
+        sentences = transcript_text.split('.')[:10]  # First 10 sentences
+        sentences = [s.strip() for s in sentences if s.strip()]
+        print(f"✅ Sentences extracted: {len(sentences)} sentences")
+        
+        # Generate quiz
+        print("❓ Step 3/3: Generating quiz questions (this may take 10-20 seconds)...")
+        quiz_questions = ollama.generate_quiz(vocabulary, sentences, count=8)
+        print(f"✅ Quiz generated: {len(quiz_questions)} questions")
+        
+        return jsonify({'quiz': quiz_questions})
+    
+    except Exception as e:
+        print(f"❌ Error generating quiz: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(e):
