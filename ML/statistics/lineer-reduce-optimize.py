@@ -1,82 +1,106 @@
 # ====================================================
-#  Temel İstatistik + Optimizasyon + Reduce Örneği
+#  OOP ile İstatistik + Optimizasyon + Reduce Örneği
 # ====================================================
 
 from functools import reduce
 from scipy.stats import bernoulli, binom, poisson
 from scipy.optimize import linprog
 
-# ----------------------------------------------------
-# 1. Olasılık Dağılımları (Discrete Probability)
-# ----------------------------------------------------
-print("\n--- 1. Olasılık Dağılımları ---")
+class ProbabilityCalculator:
+    """Olasılık dağılımı hesaplamalarını yöneten sınıf."""
+    def __init__(self, p, n, lam):
+        self.p = p
+        self.n = n
+        self.lam = lam
+        self.probabilities = {}
 
-# Bernoulli: tek olay
-p = 0.6
-rv_bern = bernoulli(p)
-print("Bernoulli P(X=1):", rv_bern.pmf(1))
+    def calculate_bernoulli(self, k=1):
+        self.probabilities['Bernoulli_P1'] = bernoulli.pmf(k, self.p)
+        return self.probabilities['Bernoulli_P1']
 
-# Binomial: 10 deneme, başarı olasılığı 0.6
-n = 10
-rv_binom = binom(n, p)
-print("Binom P(X=5):", rv_binom.pmf(5))
+    def calculate_binomial(self, k=5):
+        self.probabilities['Binom_P5'] = binom.pmf(k, self.n, self.p)
+        return self.probabilities['Binom_P5']
 
-# Poisson: Ortalama 3 olay
-lam = 3
-rv_pois = poisson(lam)
-print("Poisson P(X=2):", rv_pois.pmf(2))
+    def calculate_poisson(self, k=2):
+        self.probabilities['Poisson_P2'] = poisson.pmf(k, self.lam)
+        return self.probabilities['Poisson_P2']
 
-# Küçük bir olasılık listesi üretelim
-probabilities = [rv_bern.pmf(1), rv_binom.pmf(5), rv_pois.pmf(2)]
-print("Olasılıklar listesi:", probabilities)
+    def run_all_calculations(self):
+        """Tüm olasılıkları hesaplar ve bir liste olarak döndürür."""
+        return [
+            self.calculate_bernoulli(),
+            self.calculate_binomial(),
+            self.calculate_poisson()
+        ]
 
-# ----------------------------------------------------
-# 2. Lineer Programlama (Linear Programming)
-# ----------------------------------------------------
-print("\n--- 2. Lineer Programlama ---")
+class OptimizationSolver:
+    """Lineer programlama optimizasyonunu çözen sınıf."""
+    def __init__(self, c, A_ub, b_ub, A_eq, b_eq, bounds):
+        self.c = c
+        self.A_ub = A_ub
+        self.b_ub = b_ub
+        self.A_eq = A_eq
+        self.b_eq = b_eq
+        self.bounds = bounds
+        self.result = None
 
-# Basit üretim optimizasyonu: 2 ürün, kaynak sınırlı
-# minimize 10*x1 + 15*x2
-c = [10, 15]             # maliyetler
-A_ub = [[1, 0], [0, 1]]  # her ürün max kapasite sınırı
-b_ub = [8, 6]             # x1 <= 8, x2 <= 6
-A_eq = [[1, 1]]           # toplam üretim talebi
-b_eq = [10]               # x1 + x2 = 10
-bounds = [(0, None), (0, None)]
+    def solve(self):
+        """Optimizasyon problemini çözer ve sonucu saklar."""
+        self.result = linprog(self.c, A_ub=self.A_ub, b_ub=self.b_ub,
+                               A_eq=self.A_eq, b_eq=self.b_eq,
+                               bounds=self.bounds, method='highs')
+        return self.result
 
-res = linprog(c, A_ub=A_ub, b_ub=b_ub,
-              A_eq=A_eq, b_eq=b_eq,
-              bounds=bounds, method='highs')
+class AnalysisOrchestrator:
+    """Analiz sürecini yönetir ve sonuçları özetler."""
+    def __init__(self, prob_calc, opt_solver):
+        self.prob_calc = prob_calc
+        self.opt_solver = opt_solver
+        self.summary = {}
 
-if res.success:
-    print("Optimal çözüm bulundu:")
-    print(f"x1 = {res.x[0]:.2f}, x2 = {res.x[1]:.2f}")
-    print("Toplam maliyet:", res.fun)
-else:
-    print("Optimizasyon başarısız:", res.message)
+    def run_analysis(self):
+        """Tüm analiz adımlarını çalıştırır ve bir özet oluşturur."""
+        # 1. Olasılıkları hesapla
+        probabilities_list = self.prob_calc.run_all_calculations()
+        print("--- 1. Olasılık Hesaplamaları ---")
+        print(f"Hesaplanan olasılıklar: {probabilities_list}\n")
 
-# ----------------------------------------------------
-# 3. Reduce ile sonuçları özetlemek
-# ----------------------------------------------------
-print("\n--- 3. Reduce ile Özetleme ---")
+        # 2. Optimizasyonu çöz
+        opt_result = self.opt_solver.solve()
+        print("--- 2. Lineer Optimizasyon ---")
+        if opt_result.success:
+            print("Optimal çözüm bulundu:")
+            print(f"x1 = {opt_result.x[0]:.2f}, x2 = {opt_result.x[1]:.2f}")
+            print(f"Toplam maliyet: {opt_result.fun}\n")
+        else:
+            print(f"Optimizasyon başarısız: {opt_result.message}\n")
 
-# Olasılık listesinin ortalamasını hesapla
-total_prob = reduce(lambda x, y: x + y, probabilities)
-avg_prob = total_prob / len(probabilities)
-print("Ortalama olasılık:", avg_prob)
+        # 3. Sonuçları birleştir ve özetle
+        self.summary.update(self.prob_calc.probabilities)
+        
+        total_prob = reduce(lambda x, y: x + y, probabilities_list)
+        self.summary["Average_Prob"] = total_prob / len(probabilities_list)
+        
+        if opt_result.success:
+            self.summary["x1"] = opt_result.x[0]
+            self.summary["x2"] = opt_result.x[1]
+            self.summary["Total_Cost"] = opt_result.fun
 
-# Optimizasyon değişkenlerini çarpım olarak birleştir
-x_product = reduce(lambda x, y: x * y, res.x)
-print("x1 * x2 =", x_product)
+    def display_summary(self):
+        """Sonuç özetini ekrana yazdırır."""
+        print("--- 3. Sonuç Özeti ---")
+        for key, value in self.summary.items():
+            print(f"{key}: {value}")
 
-# Her şeyi tek çıktıda toparlayalım
-summary = {
-    "Bernoulli_P1": rv_bern.pmf(1),
-    "Binom_P5": rv_binom.pmf(5),
-    "Poisson_P2": rv_pois.pmf(2),
-    "Average_Prob": avg_prob,
-    "x1": res.x[0],
-    "x2": res.x[1],
-    "Total_Cost": res.fun
-}
-print("\nSonuç Özeti:", summary)
+if __name__ == "__main__":
+    # Parametreleri ve girdileri tanımla
+    prob_calculator = ProbabilityCalculator(p=0.6, n=10, lam=3)
+    
+    opt_solver = OptimizationSolver(c=[10, 15], A_ub=[[1, 0], [0, 1]], b_ub=[8, 6],
+                                    A_eq=[[1, 1]], b_eq=[10], bounds=[(0, None), (0, None)])
+
+    # Analizi yönet ve çalıştır
+    main_analysis = AnalysisOrchestrator(prob_calculator, opt_solver)
+    main_analysis.run_analysis()
+    main_analysis.display_summary()
