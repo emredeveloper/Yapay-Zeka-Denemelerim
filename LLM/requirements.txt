@@ -1,12 +1,5 @@
-ollama>=0.1.0
-chromadb>=0.4.0
-sentence-transformers>=2.2.0
-numpy
-torch>=2.0.0
-scikit-learn
-tqdm
-python-dotenv
-flask>=2.0.0
-flask-cors>=4.0.0
-Pillow>=9.0.0
-werkzeug>=2.0.0
+google-genai
+pydantic
+requests
+beautifulsoup4
+flask
