@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 from collections import defaultdict
 
-client = genai.Client(api_key="AIzaSyBDTJmH-oCCq9Td7G6g93_93yHH3gTcJkg")
+client = genai.Client(api_key="")
 
 # ==================== AGENT 1: QUIZ GENERATOR AGENT ====================
 class QuizGeneratorAgent:
