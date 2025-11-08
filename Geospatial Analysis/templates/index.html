@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkiye Coğrafi Analiz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-geo-alt-fill"></i> Türkiye Coğrafi Analiz
+            </span>
+            <span class="badge bg-light text-dark" id="agent-status-badge">
+                <i class="bi bi-circle-fill text-secondary"></i> Durum kontrol ediliyor...
+            </span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <div class="row g-3">
+            <!-- Sol Panel - Kontroller -->
+            <div class="col-lg-3 col-md-4">
+                <!-- Harita Ayarları -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><i class="bi bi-gear"></i> Harita Ayarları</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Şehir Seçimi -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">
+                                <i class="bi bi-geo"></i> Şehirler
+                            </label>
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="city-search" 
+                                       placeholder="Şehir ara..." onkeyup="filterCities()">
+                            </div>
+                            <div id="cities-checkboxes" class="border rounded p-2" style="max-height: 250px; overflow-y: auto; background-color: #f8f9fa;">
+                                {% for city in cities %}
+                                <div class="form-check city-item">
+                                    <input class="form-check-input city-checkbox" type="checkbox" value="{{ city }}" id="city-{{ loop.index }}" 
+                                           {% if city in ['Istanbul', 'Ankara', 'Izmir'] %}checked{% endif %}>
+                                    <label class="form-check-label" for="city-{{ loop.index }}">{{ city }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="selectAllCities()">Tümünü Seç</button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="deselectAllCities()">Temizle</button>
+                            </div>
+                        </div>
+
+                        <!-- Harita Seçenekleri -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">
+                                <i class="bi bi-palette"></i> Harita Stili
+                            </label>
+                            <select class="form-select form-select-sm" id="map-style">
+                                <option value="OpenStreetMap" selected>OpenStreetMap</option>
+                                <option value="Satellite">Satellite</option>
+                                <option value="Terrain">Terrain</option>
+                                <option value="Dark">Dark</option>
+                            </select>
+                        </div>
+
+                        <!-- Görünüm Seçenekleri -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">
+                                <i class="bi bi-eye"></i> Görünüm
+                            </label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show-boundaries" checked>
+                                <label class="form-check-label small" for="show-boundaries">İl Sınırları</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show-clustering">
+                                <label class="form-check-label small" for="show-clustering">Marker Clustering</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show-lines" checked>
+                                <label class="form-check-label small" for="show-lines">Mesafe Çizgileri</label>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary w-100" onclick="createMap()">
+                            <i class="bi bi-map"></i> Harita Oluştur
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orta Panel - Harita -->
+            <div class="col-lg-6 col-md-8">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="bi bi-map"></i> Harita Görünümü</h6>
+                        <span id="map-status" class="badge bg-light text-dark" style="display: none;"></span>
+                    </div>
+                    <div class="card-body p-0" style="position: relative;">
+                        <div id="map" style="height: 650px; border-radius: 0 0 0.375rem 0.375rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sağ Panel - Bilgiler ve AI -->
+            <div class="col-lg-3 col-md-12">
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs" id="infoTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab">
+                            <i class="bi bi-bar-chart"></i> İstatistikler
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="city-tab" data-bs-toggle="tab" data-bs-target="#city" type="button" role="tab">
+                            <i class="bi bi-info-circle"></i> Şehir
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai" type="button" role="tab">
+                            <i class="bi bi-robot"></i> AI Asistan
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="infoTabContent">
+                    <!-- İstatistikler Tab -->
+                    <div class="tab-pane fade show active" id="stats" role="tabpanel">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                                <div id="statistics">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="bi bi-bar-chart" style="font-size: 2rem;"></i>
+                                        <p class="mt-2 small">Şehir seçip harita oluşturun</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-sm btn-primary w-100" onclick="loadStatistics()">
+                                        <i class="bi bi-calculator"></i> İstatistikleri Hesapla
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary w-100" onclick="loadDistances()">
+                                        <i class="bi bi-rulers"></i> Mesafeleri Hesapla
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary w-100" onclick="loadCitiesTable()">
+                                        <i class="bi bi-table"></i> Şehir Tablosu
+                                    </button>
+                                </div>
+                                <div id="distances" class="mt-3" style="display: none;"></div>
+                                <div id="cities-table" class="mt-3" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Şehir Detayları Tab -->
+                    <div class="tab-pane fade" id="city" role="tabpanel">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Şehir Seçin</label>
+                                    <select class="form-select form-select-sm" id="city-selector" onchange="loadCityInfo()">
+                                        {% for city in cities %}
+                                        <option value="{{ city }}" {% if city == 'Istanbul' %}selected{% endif %}>{{ city }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div id="city-info" class="small">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="bi bi-info-circle" style="font-size: 2rem;"></i>
+                                        <p class="mt-2">Şehir seçip bilgileri yükleyin</p>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-primary w-100 mt-3" onclick="loadCityInfo()">
+                                    <i class="bi bi-download"></i> Bilgileri Yükle
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Asistan Tab -->
+                    <div class="tab-pane fade" id="ai" role="tabpanel">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-0" style="max-height: 600px; display: flex; flex-direction: column;">
+                                <!-- Chat Messages -->
+                                <div id="chat-messages" class="p-3" style="flex: 1; overflow-y: auto; background-color: #f8f9fa; min-height: 400px;">
+                                    <div class="alert alert-info mb-2 py-2">
+                                        <small>
+                                            <i class="bi bi-info-circle"></i> Merhaba! Türkiye şehirleri hakkında sorularınızı sorabilirsiniz.
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Chat Input -->
+                                <div class="p-3 border-top">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" class="form-control" id="chat-input" 
+                                               placeholder="Sorunuzu yazın..." 
+                                               onkeypress="if(event.key === 'Enter') sendAgentMessage()">
+                                        <button class="btn btn-primary" onclick="sendAgentMessage()">
+                                            <i class="bi bi-send"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Görsel Analiz -->
+                                    <div class="mb-2">
+                                        <div class="input-group input-group-sm">
+                                            <input type="file" class="form-control form-control-sm" id="image-input" 
+                                                   accept="image/png,image/jpeg,image/jpg,image/webp,image/gif">
+                                            <button class="btn btn-info btn-sm" onclick="analyzeImage()" title="Görsel Analiz">
+                                                <i class="bi bi-image"></i>
+                                            </button>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm mt-1" id="image-question" 
+                                               placeholder="Sorunuz (opsiyonel)">
+                                    </div>
+                                    
+                                    <!-- Örnek Sorgular -->
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">Örnek:</small>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="setExampleQuery('Istanbul hakkında bilgi ver')" title="Şehir bilgisi">
+                                                <i class="bi bi-geo"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="setExampleQuery('Istanbul ve Ankara arasındaki mesafe nedir?')" title="Mesafe">
+                                                <i class="bi bi-rulers"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="setExampleQuery('Marmara bölgesindeki şehirleri listele')" title="Bölge arama">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="setExampleQuery('haritada şuan ne var')" title="Harita analizi">
+                                                <i class="bi bi-map"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+geopandas
+folium
+requests
+flask
+pandas
+shapely
+lmstudio
+Pillow
+matplotlib
+

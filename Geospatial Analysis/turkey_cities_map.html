@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_7a234d82d8efa9d2b247a78831abe78d {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_7a234d82d8efa9d2b247a78831abe78d" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_7a234d82d8efa9d2b247a78831abe78d = L.map(
+                "map_7a234d82d8efa9d2b247a78831abe78d",
+                {
+                    center: [39.0, 35.0],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 6,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_4c8d313b797ebc87dd2cdeb5a9a5f135 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_4c8d313b797ebc87dd2cdeb5a9a5f135.addTo(map_7a234d82d8efa9d2b247a78831abe78d);
+        
+    
+            var marker_7364aafb529485a4eed6ca2a6f4e8ebc = L.marker(
+                [41.0082, 28.9784],
+                {
+}
+            ).addTo(map_7a234d82d8efa9d2b247a78831abe78d);
+        
+    
+        var popup_f45dc6afcf70f30137992b2380017743 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_3d9236c2ee7fbcda62f08e046392acec = $(`<div id="html_3d9236c2ee7fbcda62f08e046392acec" style="width: 100.0%; height: 100.0%;">Istanbul</div>`)[0];
+                popup_f45dc6afcf70f30137992b2380017743.setContent(html_3d9236c2ee7fbcda62f08e046392acec);
+            
+        
+
+        marker_7364aafb529485a4eed6ca2a6f4e8ebc.bindPopup(popup_f45dc6afcf70f30137992b2380017743)
+        ;
+
+        
+    
+    
+            var marker_e6212ffccee45e2c0b035d493d1f3c67 = L.marker(
+                [39.9208, 32.8541],
+                {
+}
+            ).addTo(map_7a234d82d8efa9d2b247a78831abe78d);
+        
+    
+        var popup_eedfd02dc55cc3ac8f4231ba77d29145 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_61236dcb695b4279ff9a6873bbffa0d6 = $(`<div id="html_61236dcb695b4279ff9a6873bbffa0d6" style="width: 100.0%; height: 100.0%;">Ankara</div>`)[0];
+                popup_eedfd02dc55cc3ac8f4231ba77d29145.setContent(html_61236dcb695b4279ff9a6873bbffa0d6);
+            
+        
+
+        marker_e6212ffccee45e2c0b035d493d1f3c67.bindPopup(popup_eedfd02dc55cc3ac8f4231ba77d29145)
+        ;
+
+        
+    
+    
+            var marker_a2c81af84381e191166463715842bfcf = L.marker(
+                [38.4192, 27.1287],
+                {
+}
+            ).addTo(map_7a234d82d8efa9d2b247a78831abe78d);
+        
+    
+        var popup_f95b52a8aa2882c093a4316a9c4cc0f9 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_739546c141c03198d8386410bd6c109c = $(`<div id="html_739546c141c03198d8386410bd6c109c" style="width: 100.0%; height: 100.0%;">Izmir</div>`)[0];
+                popup_f95b52a8aa2882c093a4316a9c4cc0f9.setContent(html_739546c141c03198d8386410bd6c109c);
+            
+        
+
+        marker_a2c81af84381e191166463715842bfcf.bindPopup(popup_f95b52a8aa2882c093a4316a9c4cc0f9)
+        ;
+
+        
+    
+</script>
+</html>
