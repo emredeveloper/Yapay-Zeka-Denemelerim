@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-client = genai.Client(api_key="AIzaSyBDTJmH-oCCq9Td7G6g93_93yHH3gTcJkg")
+client = genai.Client(api_key="")
 
 class Secenek(BaseModel):
     """Soru seçeneği"""
