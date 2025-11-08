@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkçe Quiz Üretici - AI Destekli</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            padding: 2rem 0;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-success {
+            border-radius: 25px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            padding: 0.75rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .quiz-result {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .question-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .question-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .badge-easy {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .badge-medium {
+            background-color: #ffc107;
+            color: #000;
+        }
+        
+        .badge-hard {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .option {
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-left: 4px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .option:hover {
+            background-color: #e9ecef;
+            border-color: #667eea;
+        }
+        
+        .option.selected {
+            background-color: #e3f2fd;
+            border-color: #667eea;
+            border-left-color: #667eea;
+        }
+        
+        .option.correct {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .option.wrong {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .spinner-border {
+            display: none;
+        }
+        
+        .loading .spinner-border {
+            display: inline-block;
+        }
+        
+        .answer-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .answer-section.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        .score-section {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .score-number {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Ana Kart -->
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h1 class="mb-0">
+                            <i class="bi bi-question-circle"></i> Türkçe Quiz Üretici
+                        </h1>
+                        <p class="mb-0 mt-2">AI Destekli Quiz Soruları Oluşturun</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Form -->
+                        <form id="quizForm">
+                            <div class="mb-3">
+                                <label for="konu" class="form-label">
+                                    <i class="bi bi-book"></i> Konu Başlığı
+                                </label>
+                                <input type="text" class="form-control" id="konu" 
+                                       placeholder="Örn: Python Programlama Dili Temel Kavramlar" required>
+                                <small class="text-muted">Veya aşağıdan URL ile makale içeriği çekin</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="url" class="form-label">
+                                    <i class="bi bi-link-45deg"></i> Makale URL (Opsiyonel)
+                                </label>
+                                <input type="url" class="form-control" id="url" 
+                                       placeholder="https://example.com/makale">
+                                <small class="text-muted">URL verirseniz konu başlığı otomatik olarak makale içeriğinden çıkarılır</small>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="soru_sayisi" class="form-label">
+                                        <i class="bi bi-list-ol"></i> Soru Sayısı
+                                    </label>
+                                    <select class="form-select" id="soru_sayisi" required>
+                                        <option value="5">5 Soru</option>
+                                        <option value="6">6 Soru</option>
+                                        <option value="7">7 Soru</option>
+                                        <option value="8">8 Soru</option>
+                                        <option value="9">9 Soru</option>
+                                        <option value="10">10 Soru</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="zorluk" class="form-label">
+                                        <i class="bi bi-bar-chart"></i> Zorluk Seviyesi
+                                    </label>
+                                    <select class="form-select" id="zorluk" required>
+                                        <option value="kolay">Kolay</option>
+                                        <option value="orta" selected>Orta</option>
+                                        <option value="zor">Zor</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <i class="bi bi-magic"></i> Quiz Oluştur
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Hata Mesajı -->
+                        <div id="errorAlert" class="alert alert-danger mt-3" style="display: none;"></div>
+                        
+                        <!-- Quiz Sonuçları -->
+                        <div id="quizResult" class="quiz-result mt-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 id="quizBaslik" class="mb-0"></h3>
+                                    <p id="quizAciklama" class="mb-0 mt-2"></p>
+                                    <div class="mt-2">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-star"></i> Toplam Puan: <span id="toplamPuan"></span>
+                                        </span>
+                                        <span class="badge bg-light text-dark ms-2">
+                                            <i class="bi bi-list-ul"></i> Soru Sayısı: <span id="soruSayisi"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Puan Bölümü (Gizli başlangıçta) -->
+                                    <div id="scoreSection" class="score-section" style="display: none;">
+                                        <h4>Puanınız</h4>
+                                        <div class="score-number" id="scoreNumber">0</div>
+                                        <p class="mb-0" id="scoreText"></p>
+                                    </div>
+                                    
+                                    <div id="questionsContainer"></div>
+                                    
+                                    <!-- Cevapları Göster Butonu -->
+                                    <div class="d-grid gap-2 mt-4" id="showAnswersBtn" style="display: none;">
+                                        <button class="btn btn-success btn-lg" onclick="showAllAnswers()">
+                                            <i class="bi bi-check-circle"></i> Cevapları Göster ve Puanı Hesapla
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let quizData = null;
+        let userAnswers = {};
+        
+        const form = document.getElementById('quizForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorAlert = document.getElementById('errorAlert');
+        const quizResult = document.getElementById('quizResult');
+        const questionsContainer = document.getElementById('questionsContainer');
+        const showAnswersBtn = document.getElementById('showAnswersBtn');
+        const scoreSection = document.getElementById('scoreSection');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // UI güncellemeleri
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            errorAlert.style.display = 'none';
+            quizResult.style.display = 'none';
+            userAnswers = {};
+            
+            // Form verilerini al
+            const data = {
+                konu: document.getElementById('konu').value,
+                url: document.getElementById('url').value,
+                soru_sayisi: parseInt(document.getElementById('soru_sayisi').value),
+                zorluk: document.getElementById('zorluk').value
+            };
+            
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    quizData = result;
+                    displayQuiz(result);
+                } else {
+                    showError(result.error);
+                }
+            } catch (error) {
+                showError('Bir hata oluştu: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+            }
+        });
+        
+        function showError(message) {
+            errorAlert.textContent = message;
+            errorAlert.style.display = 'block';
+        }
+        
+        function displayQuiz(result) {
+            // Başlık ve açıklama
+            document.getElementById('quizBaslik').textContent = result.baslik;
+            document.getElementById('quizAciklama').textContent = result.aciklama;
+            document.getElementById('toplamPuan').textContent = result.toplam_puan;
+            document.getElementById('soruSayisi').textContent = result.sorular.length;
+            
+            // Soruları göster
+            questionsContainer.innerHTML = '';
+            scoreSection.style.display = 'none';
+            showAnswersBtn.style.display = 'block';
+            
+            result.sorular.forEach((soru, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.id = `question-${index}`;
+                
+                // Zorluk badge'i
+                let badgeClass = 'badge-medium';
+                if (soru.zorluk === 'kolay') badgeClass = 'badge-easy';
+                else if (soru.zorluk === 'zor') badgeClass = 'badge-hard';
+                
+                // Soru tipi
+                const tipText = soru.tip.replace('_', ' ').toUpperCase();
+                
+                let optionsHTML = '';
+                if (soru.secenekler && soru.secenekler.length > 0) {
+                    optionsHTML = soru.secenekler.map((secenek, idx) => {
+                        const optionLetter = String.fromCharCode(65 + idx);
+                        return `
+                            <div class="option" onclick="selectOption(${index}, ${idx})" data-question="${index}" data-option="${idx}">
+                                ${optionLetter}. ${secenek.metin}
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    // Doğru/Yanlış veya boşluk doldurma için
+                    optionsHTML = `
+                        <div class="option" onclick="selectOption(${index}, 0)" data-question="${index}" data-option="0">
+                            Doğru
+                        </div>
+                        <div class="option" onclick="selectOption(${index}, 1)" data-question="${index}" data-option="1">
+                            Yanlış
+                        </div>
+                    `;
+                }
+                
+                questionCard.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="mb-0">Soru ${index + 1}</h5>
+                        <div>
+                            <span class="badge ${badgeClass} me-2">${soru.zorluk.toUpperCase()}</span>
+                            <span class="badge bg-secondary">${tipText}</span>
+                        </div>
+                    </div>
+                    <p class="fs-5 mb-3">${soru.soru}</p>
+                    <div class="options-container">
+                        ${optionsHTML}
+                    </div>
+                    <div class="answer-section" id="answer-${index}">
+                        <strong><i class="bi bi-check2-circle"></i> Doğru Cevap:</strong>
+                        <p class="mb-2">${soru.dogru_cevap}</p>
+                        <strong><i class="bi bi-info-circle"></i> Açıklama:</strong>
+                        <p class="mb-0">${soru.aciklama}</p>
+                    </div>
+                `;
+                
+                questionsContainer.appendChild(questionCard);
+            });
+            
+            quizResult.style.display = 'block';
+            quizResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        function selectOption(questionIndex, optionIndex) {
+            // Önceki seçimi kaldır
+            const questionCard = document.getElementById(`question-${questionIndex}`);
+            const options = questionCard.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            // Yeni seçimi işaretle
+            const selectedOption = options[optionIndex];
+            selectedOption.classList.add('selected');
+            
+            // Kullanıcı cevabını kaydet
+            userAnswers[questionIndex] = optionIndex;
+        }
+        
+        function showAllAnswers() {
+            if (!quizData) return;
+            
+            let correctCount = 0;
+            const totalQuestions = quizData.sorular.length;
+            
+            quizData.sorular.forEach((soru, index) => {
+                const questionCard = document.getElementById(`question-${index}`);
+                const answerSection = document.getElementById(`answer-${index}`);
+                const options = questionCard.querySelectorAll('.option');
+                
+                // Doğru cevabı bul
+                let correctOptionIndex = -1;
+                if (soru.secenekler && soru.secenekler.length > 0) {
+                    correctOptionIndex = soru.secenekler.findIndex(sec => sec.dogru);
+                }
+                
+                // Kullanıcı cevabını kontrol et
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer === correctOptionIndex;
+                
+                if (isCorrect) {
+                    correctCount++;
+                }
+                
+                // Seçenekleri işaretle
+                options.forEach((opt, optIdx) => {
+                    opt.classList.remove('selected', 'correct', 'wrong');
+                    opt.style.cursor = 'default';
+                    
+                    if (optIdx === correctOptionIndex) {
+                        opt.classList.add('correct');
+                        opt.innerHTML = `<i class="bi bi-check-circle-fill text-success"></i> ${opt.textContent}`;
+                    } else if (optIdx === userAnswer && !isCorrect) {
+                        opt.classList.add('wrong');
+                        opt.innerHTML = `<i class="bi bi-x-circle-fill text-danger"></i> ${opt.textContent}`;
+                    }
+                });
+                
+                // Cevap bölümünü göster
+                answerSection.classList.add('show');
+            });
+            
+            // Puanı göster
+            const score = correctCount;
+            const percentage = Math.round((score / totalQuestions) * 100);
+            document.getElementById('scoreNumber').textContent = score + ' / ' + totalQuestions;
+            
+            let scoreText = '';
+            if (percentage === 100) {
+                scoreText = 'Mükemmel! Tüm soruları doğru cevapladınız! 🎉';
+            } else if (percentage >= 80) {
+                scoreText = 'Harika! Çok iyi bir sonuç! 👏';
+            } else if (percentage >= 60) {
+                scoreText = 'İyi bir sonuç! Biraz daha çalışabilirsiniz. 💪';
+            } else {
+                scoreText = 'Tekrar deneyin! Daha fazla çalışma gerekiyor. 📚';
+            }
+            
+            document.getElementById('scoreText').textContent = scoreText;
+            scoreSection.style.display = 'block';
+            showAnswersBtn.style.display = 'none';
+            
+            // Puan bölümüne scroll et
+            scoreSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+</body>
+</html>
