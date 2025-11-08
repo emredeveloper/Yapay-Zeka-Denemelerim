@@ -45,3 +45,9 @@ dist/
 # İşletim sistemi dosyaları
 .DS_Store
 Thumbs.db
+
+# Geospatial Analysis - Upload edilen görseller (geçici)
+Geospatial Analysis/static/uploads/*.png
+Geospatial Analysis/static/uploads/*.jpg
+Geospatial Analysis/static/uploads/*.jpeg
+!Geospatial Analysis/static/uploads/.gitkeep
