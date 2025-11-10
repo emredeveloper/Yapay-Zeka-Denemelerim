@@ -1,0 +1,8 @@
+streamlit>=1.29.0
+pandas>=2.1.4
+matplotlib>=3.8.2
+seaborn>=0.13.0
+numpy>=1.26.2
+rapidfuzz>=3.0.0
+jellyfish>=1.0.0
+textdistance>=4.5.0
