@@ -1,8 +1,3 @@
-# Yapay Zeka ve Veri Görselleştirme Denemelerim
+# My Artificial Intelligence and Data Visualization Experiments
 
-Bu repo, yapay zeka, veri görselleştirme ve web teknolojileri konusundaki öğrenimlerimi ve küçük projelerimi/denemelerimi paylaşmak amacıyla oluşturulmuştur.
-
-
-
-
-
+This repository was created to share my learning journey and small projects/experiments on artificial intelligence, data visualization, and web technologies.
