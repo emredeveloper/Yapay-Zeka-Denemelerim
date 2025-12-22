@@ -1,0 +1,21 @@
+# CLaRa Unified RAG - Gereksinimler
+# ==================================
+# Tamamen Ollama tabanlı sistem
+
+# Core Dependencies
+torch>=2.0.0
+numpy>=1.21.0
+
+# Ollama Python Client
+ollama>=0.1.0
+
+# UI
+gradio>=4.0.0
+streamlit>=1.28.0
+
+# PDF Processing
+PyMuPDF>=1.23.0
+
+# Utilities
+tqdm>=4.66.0
+rich>=13.0.0

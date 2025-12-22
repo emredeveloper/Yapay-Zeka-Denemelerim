@@ -8,6 +8,9 @@
 # Data files
 *.csv
 
+# PDF files
+*.pdf
+
 # Bytecode/cache
 __pycache__/
 *.pyc
